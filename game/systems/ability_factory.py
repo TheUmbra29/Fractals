@@ -1,5 +1,4 @@
-from game.systems.action_system.base_action import BaseAction, ActionContext
-from game.systems.effect_system import Effect, EffectType, EffectSystem
+from game.core.action_base import BaseAction, ActionContext
 from game.core.event_system import event_system, EventTypes
 
 class EffectComponent:
@@ -18,13 +17,13 @@ class EffectComponent:
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
 class DamageEffect(EffectComponent):
-    """Efecto de daño genérico - CORREGIDO"""
+    """Efecto de daño genérico"""
     
     def apply(self, context):
         multiplier = self.config.get('multiplier', 1.0)
         damage_type = self.config.get('damage_type', 'physical')
         aoe_radius = self.config.get('aoe_radius', 0)
-        target_filter = self.config.get('target', 'enemies')  # enemies, allies, all
+        target_filter = self.config.get('target', 'enemies')
         
         targets = self._get_targets(context, aoe_radius, target_filter)
         total_damage = 0
@@ -55,41 +54,36 @@ class DamageEffect(EffectComponent):
         return len(targets) > 0
     
     def _get_targets(self, context, aoe_radius, target_filter):
-        """🎯 CORREGIDO: Método para obtener objetivos"""
         targets = []
         
         if aoe_radius > 0 and context.target_position:
-            # AOE alrededor de posición
             for entity in context.entities:
                 distance = self._calculate_distance(context.target_position, entity.position)
                 if distance <= aoe_radius and self._is_valid_target(entity, context.caster, target_filter):
                     targets.append(entity)
         elif context.target and self._is_valid_target(context.target, context.caster, target_filter):
-            # Objetivo único
             targets = [context.target]
         elif context.entities:
-            # Usar entidades del contexto
             targets = [e for e in context.entities if self._is_valid_target(e, context.caster, target_filter)]
         
         return targets
     
     def _is_valid_target(self, target, caster, target_filter):
-        """Determina si un objetivo es válido según el filtro"""
         if target_filter == 'enemies':
             return target.team != caster.team
         elif target_filter == 'allies':
             return target.team == caster.team
         elif target_filter == 'all':
             return True
-        return target.team != caster.team  # Por defecto: enemigos
+        return target.team != caster.team
 
 class HealEffect(EffectComponent):
-    """Efecto de curación genérico - CORREGIDO"""
+    """Efecto de curación genérico"""
     
     def apply(self, context):
         amount = self.config.get('amount', 0)
         aoe_radius = self.config.get('aoe_radius', 0)
-        target_filter = self.config.get('target', 'allies')  # allies, all
+        target_filter = self.config.get('target', 'allies')
         
         targets = self._get_targets(context, aoe_radius, target_filter)
         total_healing = 0
@@ -115,51 +109,43 @@ class HealEffect(EffectComponent):
         return len(targets) > 0
     
     def _get_targets(self, context, aoe_radius, target_filter):
-        """🎯 CORREGIDO: Método para obtener objetivos de curación"""
         targets = []
         
         if aoe_radius > 0 and context.target_position:
-            # AOE alrededor de posición
             for entity in context.entities:
                 distance = self._calculate_distance(context.target_position, entity.position)
                 if distance <= aoe_radius and self._is_valid_target(entity, context.caster, target_filter):
                     targets.append(entity)
         elif context.target and self._is_valid_target(context.target, context.caster, target_filter):
-            # Objetivo único
             targets = [context.target]
         elif target_filter == 'allies' and context.entities:
-            # Todos los aliados
             targets = [e for e in context.entities if e.team == context.caster.team]
         elif target_filter == 'all' and context.entities:
-            # Todas las entidades
             targets = context.entities
         
         return targets
     
     def _is_valid_target(self, target, caster, target_filter):
-        """Determina si un objetivo es válido para curación"""
         if target_filter == 'allies':
             return target.team == caster.team
         elif target_filter == 'all':
             return True
-        return target.team == caster.team  # Por defecto: aliados
+        return target.team == caster.team
 
 class MovementEffect(EffectComponent):
-    """Efecto de movimiento/teletransporte - MEJORADO"""
+    """Efecto de movimiento/teletransporte"""
     
     def apply(self, context):
         move_type = self.config.get('move_type', 'teleport')
         range_distance = self.config.get('range', 1)
         
         if move_type == 'teleport' and context.target_position:
-            # Teletransporte a posición específica
             old_pos = context.caster.position
             context.caster.position = context.target_position
             print(f"✨ {context.caster.name} se teletransportó: {old_pos} → {context.target_position}")
             return True
         
         elif move_type == 'line_movement' and context.extra_data:
-            # 🎯 NUEVO: Movimiento en línea (para Carrera Relámpago)
             direction = context.extra_data.get('direction', (0, 0))
             max_length = context.extra_data.get('line_length', range_distance)
             
@@ -171,7 +157,6 @@ class MovementEffect(EffectComponent):
             return True
         
         elif move_type == 'post_action':
-            # Movimiento posterior a la acción
             context.caster.pending_post_action_move = True
             context.caster.post_action_move_range = range_distance
             print(f"🎯 {context.caster.name} prepara movimiento posterior de {range_distance} casillas")
@@ -180,7 +165,6 @@ class MovementEffect(EffectComponent):
         return False
     
     def _calculate_line_end_position(self, start_pos, direction, max_length):
-        """Calcula la posición final del movimiento en línea"""
         from game.systems.grid_system import GridSystem
         grid_system = GridSystem()
         
@@ -205,7 +189,6 @@ class BuffEffect(EffectComponent):
         target_type = self.config.get('target', 'self')
         aoe_radius = self.config.get('aoe_radius', 0)
         
-        # Determinar objetivos
         if target_type == 'self':
             targets = [context.caster]
         elif target_type == 'selected' and context.target:
@@ -213,7 +196,6 @@ class BuffEffect(EffectComponent):
         elif target_type == 'allies' and context.entities:
             targets = [e for e in context.entities if e.team == context.caster.team]
         elif aoe_radius > 0 and context.target_position and context.entities:
-            # AOE alrededor de posición
             targets = []
             for entity in context.entities:
                 distance = self._calculate_distance(context.target_position, entity.position)
@@ -244,7 +226,6 @@ class StatusEffect(EffectComponent):
         return len(targets) > 0
     
     def _get_targets(self, context, target_filter):
-        """Obtiene objetivos para efectos de estado"""
         if context.target:
             return [context.target] if self._is_valid_target(context.target, context.caster, target_filter) else []
         elif context.entities:
@@ -274,7 +255,6 @@ class ChainMovementEffect(EffectComponent):
         
         print(f"🎯 Iniciando movimiento en cadena con {len(targets)} objetivos")
         
-        # Aplicar daño a cada objetivo en orden
         total_damage = 0
         for i, target in enumerate(targets):
             current_multiplier = multipliers[min(i, len(multipliers) - 1)]
@@ -294,10 +274,8 @@ class ChainMovementEffect(EffectComponent):
             
             print(f"⛓️ [{i+1}] {caster.name} → {target.name}: {damage} daño")
         
-        # Calcular posición final
         final_position = self._calculate_final_position(caster, targets)
         
-        # Mover al caster si la posición es válida
         if final_position and self._is_position_valid(final_position, caster, context.entities):
             old_pos = caster.position
             caster.position = final_position
@@ -350,7 +328,6 @@ class ResourceRecoveryEffect(EffectComponent):
         energy_recovery = self.config.get('energy_recovery', 0)
         target_type = self.config.get('target', 'self')
         
-        # Determinar objetivos
         if target_type == 'self':
             targets = [context.caster]
         elif target_type == 'all_allies' and context.entities:
@@ -376,6 +353,60 @@ class ResourceRecoveryEffect(EffectComponent):
         
         return True
 
+class ApplyEffectComponent(EffectComponent):
+    """Componente para aplicar efectos del sistema data-driven"""
+    
+    def apply(self, context):
+        effect_id = self.config.get('effect_id')
+        target_type = self.config.get('target', 'enemy')
+        
+        if not effect_id:
+            return False
+        
+        print(f"⚡ [SISTEMA EFECTOS] {context.caster.name} aplicaría {effect_id} a {target_type}")
+        
+        # Por ahora solo retornamos True para que la habilidad se ejecute
+        # Más adelante conectaremos con el EffectSystem real
+        return True
+
+class CleanseEffectsComponent(EffectComponent):
+    """Limpia efectos negativos del objetivo"""
+    
+    def apply(self, context):
+        if not context.target:
+            return False
+        
+        print(f"✨ {context.caster.name} limpia efectos de {context.target.name}")
+        return True
+
+class UltimateRechargeComponent(EffectComponent):
+    """Recarga la ultimate del objetivo"""
+    
+    def apply(self, context):
+        target_type = self.config.get('target', 'self')
+        recharge_amount = self.config.get('value', 100)
+        
+        targets = self._get_targets(context, target_type)
+        
+        for target in targets:
+            if hasattr(target, 'energy_stats'):
+                target.energy_stats['current_energy'] = min(
+                    target.energy_stats['max_energy'],
+                    target.energy_stats['current_energy'] + recharge_amount
+                )
+                print(f"⚡ {target.name} recibe {recharge_amount} de energía ultimate")
+        
+        return len(targets) > 0
+    
+    def _get_targets(self, context, target_type):
+        if target_type == 'self':
+            return [context.caster]
+        elif target_type == 'selected' and context.target:
+            return [context.target]
+        elif target_type == 'all_allies' and context.entities:
+            return [e for e in context.entities if e.team == context.caster.team]
+        return []
+
 class ComposableAbility(BaseAction):
     """Habilidad compuesta por múltiples efectos"""
     
@@ -383,14 +414,21 @@ class ComposableAbility(BaseAction):
         name = ability_config['name']
         cost_ph = ability_config.get('cost_ph', 0)
         cooldown = ability_config.get('cooldown', 0)
+        range_val = ability_config.get('range', 1)
+        selection_mode = ability_config.get('selection_mode', 'enemy')
         
-        super().__init__(name, "ability", cost_ph, cooldown)
+        super().__init__(
+            name=name,
+            action_type="ability",
+            cost_ph=cost_ph,
+            cooldown=cooldown,
+            selection_mode=selection_mode,
+            range=range_val
+        )
         
-        self.range = ability_config.get('range', 1)
-        self.selection_mode = ability_config.get('selection_mode', 'enemy')
         self.effects_config = ability_config.get('effects', [])
         self.effects = self._build_effects()
-        self.ability_config = ability_config  # 🎯 Guardar config para referencia
+        self.ability_config = ability_config
     
     def _build_effects(self):
         effects = []
@@ -411,6 +449,12 @@ class ComposableAbility(BaseAction):
                 effects.append(ChainMovementEffect(effect_config))
             elif effect_type == 'resource_recovery':
                 effects.append(ResourceRecoveryEffect(effect_config))
+            elif effect_type == 'apply_effect':
+                effects.append(ApplyEffectComponent(effect_config))
+            elif effect_type == 'cleanse_effects':
+                effects.append(CleanseEffectsComponent(effect_config))
+            elif effect_type == 'ultimate_recharge':
+                effects.append(UltimateRechargeComponent(effect_config))
         
         return effects
     
@@ -426,7 +470,6 @@ class ComposableAbility(BaseAction):
             context.caster.has_acted = True
             context.caster.stats['current_ph'] -= self.cost_ph
             
-            # Emitir evento de habilidad usada
             event_system.emit(EventTypes.ABILITY_USED, {
                 'caster': context.caster,
                 'ability': self.name,
@@ -436,9 +479,6 @@ class ComposableAbility(BaseAction):
             print(f"🎯 {context.caster.name} usó {self.name}!")
         
         return success
-    
-    def get_range(self):
-        return self.range
     
     def get_description(self):
         descriptions = []
@@ -472,7 +512,6 @@ class UltimateAbility(ComposableAbility):
         self.is_ultimate = True
     
     def can_execute(self, context):
-        """Verifica energía además de las validaciones normales"""
         base_can_execute = super().can_execute(context)
         if not base_can_execute:
             return False
@@ -485,15 +524,12 @@ class UltimateAbility(ComposableAbility):
         return True
     
     def execute(self, context):
-        """Ejecuta consumiendo energía"""
         if not self.can_execute(context):
             return False
         
-        # Consumir energía (costo variable)
         if not context.caster.consume_ultimate_energy(self.energy_cost):
             return False
         
-        # Ejecutar efectos normales
         context.ability_name = self.name
         success = False
         
@@ -505,7 +541,6 @@ class UltimateAbility(ComposableAbility):
             context.caster.has_acted = True
             context.caster.stats['current_ph'] -= self.cost_ph
             
-            # 🎯 EMITIR EVENTO DE ULTIMATE USADA
             event_system.emit(EventTypes.ABILITY_USED, {
                 'caster': context.caster,
                 'ability': self.name,
@@ -522,7 +557,6 @@ class AbilityFactory:
     
     @staticmethod
     def create_ability(ability_config):
-        # 🎯 DETECTAR SI ES HABILIDAD DEFINITIVA
         if ability_config.get('is_ultimate', False):
             return UltimateAbility(ability_config)
         return ComposableAbility(ability_config)

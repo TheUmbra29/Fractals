@@ -1,20 +1,53 @@
-# CONFIGURACIONES DE RED THUNDER
+# game/characters/red_thunder_config.py
+RED_THUNDER_STATS = {
+    'max_hp': 90,
+    'current_hp': 90, 
+    'max_ph': 100,
+    'current_ph': 100,
+    'attack': 90,
+    'defense': 30,
+    'speed': 18,  # 1.8 * 10 para el sistema
+    'max_energy': 100
+}
+
+RED_THUNDER_ENERGY_SOURCES = {
+    'on_hit': {'base': 12, 'type': 'flat'},
+    'on_take_damage': {'base': 6, 'type': 'flat'},  
+    'on_ability_use': {'base': 15, 'type': 'flat'},
+    'on_kill': {'base': 25, 'type': 'flat'},
+    'per_turn': {'base': 8, 'type': 'flat'},
+    'on_storm_ability': {'base': 20, 'type': 'flat'}
+}
+
+RED_THUNDER_ENERGY_MULTIPLIERS = {
+    'physical_damage': 1.0,
+    'energy_damage': 1.3,
+    'kinetic_damage': 1.8,
+    'void_damage': 1.0,
+    'light_damage': 1.0,
+    'storm_damage': 2.0
+}
 
 RED_THUNDER_ABILITIES = {
     "basic_attack": {
-        "name": "Disparo relámpago",
+        "name": "Disparo Relámpago",
         "cost_ph": 0,
         "cooldown": 0,
-        "range": 100,  # 🎯 ILIMITADO
+        "range": "infinite",
         "selection_mode": "enemy",
         "effects": [
             {
                 "type": "damage",
                 "multiplier": 0.2,
-                "damage_type": "energy"
+                "damage_type": "energy",
+                "calculation": {
+                    "formula": "scales_with_source_stat",
+                    "stat": "speed",
+                    "multiplier": 1.0
+                }
             },
             {
-                "type": "resource_recovery",
+                "type": "resource_recovery", 
                 "ph_recovery": 25
             }
         ]
@@ -28,22 +61,19 @@ RED_THUNDER_ABILITIES = {
         "selection_mode": "line",
         "effects": [
             {
-                "type": "movement",  # 🎯 CAMBIADO: de damage a movement
-                "move_type": "line_movement",  # 🎯 NUEVO TIPO
-                "range": 10
-            },
-            {
-                "type": "damage",  # 🎯 DAÑO ADICIONAL si hay enemigos
+                "type": "damage",
                 "multiplier": 0.4,
-                "damage_type": "physical",
-                "target": "enemies"  # Solo daña enemigos
+                "damage_type": "kinetic", 
+                "calculation": {
+                    "formula": "scales_with_source_stat",
+                    "stat": "speed", 
+                    "multiplier": 1.0
+                }
             },
             {
-                "type": "status",
-                "status_type": "Quemadura Cinética", 
-                "duration": 2,
-                "value": 0.15,
-                "target": "enemies"  # Solo aplica a enemigos
+                "type": "apply_effect",
+                "effect_id": "kinetic_burn",
+                "target": "enemy"
             }
         ]
     },
@@ -58,13 +88,16 @@ RED_THUNDER_ABILITIES = {
             {
                 "type": "damage",
                 "multiplier": 0.7,
-                "aoe_radius": 2,
-                "damage_type": "energy"
+                "damage_type": "kinetic",
+                "calculation": {
+                    "formula": "scales_with_source_stat", 
+                    "stat": "speed",
+                    "multiplier": 1.0
+                }
             },
             {
-                "type": "buff",
-                "stat_buffs": {"speed": 0.6},
-                "duration": 2,
+                "type": "apply_effect",
+                "effect_id": "overload", 
                 "target": "self"
             }
         ]
@@ -73,48 +106,21 @@ RED_THUNDER_ABILITIES = {
     "red_storm": {
         "name": "Tormenta Rojiza", 
         "cost_ph": 0,
-        "energy_cost": 115,
+        "energy_cost": 100,
         "cooldown": 4,
         "is_ultimate": True,
-        "selection_mode": "self",
+        "selection_mode": "none",
         "effects": [
             {
-                "type": "buff",
-                "stat_buffs": {"speed": 5.0, "attack": 1.0},
-                "duration": 4,
+                "type": "apply_effect",
+                "effect_id": "hyper_speed",
+                "target": "self"
+            },
+            {
+                "type": "apply_effect", 
+                "effect_id": "improved_dash",
                 "target": "self"
             }
         ]
     }
-}
-
-RED_THUNDER_STATS = {
-    'max_hp': 90,
-    'current_hp': 90, 
-    'max_ph': 100,
-    'current_ph': 100,
-    'attack': 90,
-    'defense': 30,
-    'speed': 18,
-    'max_energy': 115
-}
-
-# 🎯 NUEVO: AÑADIR ESTAS LÍNEAS QUE FALTABAN
-RED_THUNDER_ENERGY_SOURCES = {
-    'on_hit': {'base': 12, 'type': 'flat'},
-    'on_take_damage': {'base': 3, 'type': 'flat'},  
-    'on_ability_use': {'base': 8, 'type': 'flat'},
-    'on_kill': {'base': 20, 'type': 'flat'},
-    'on_heal': {'base': 5, 'type': 'flat'},
-    'on_buff': {'base': 6, 'type': 'flat'},
-    'per_turn': {'base': 10, 'type': 'flat'}
-}
-
-RED_THUNDER_ENERGY_MULTIPLIERS = {
-    'physical_damage': 1.5,
-    'energy_damage': 1.0,
-    'void_damage': 1.0,
-    'light_damage': 1.0,
-    'storm_damage': 1.8,
-    'ultimate_ability': 0.0
 }

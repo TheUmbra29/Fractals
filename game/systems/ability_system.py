@@ -1,5 +1,5 @@
 import pygame
-from game.systems.action_system.base_action import ActionContext
+from game.core.action_base import ActionContext  
 from game.systems.selection_system import SelectionSystem
 
 class AbilitySystem:

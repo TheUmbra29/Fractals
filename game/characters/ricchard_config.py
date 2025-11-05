@@ -1,4 +1,13 @@
-# SOLO CONFIGURACIONES - NO CLASES AQUÍ
+RICCHARD_STATS = {
+    'max_hp': 100,
+    'current_hp': 100, 
+    'max_ph': 130,
+    'current_ph': 130,
+    'attack': 100,
+    'defense': 40,
+    'speed': 20,
+    'max_energy': 120
+}
 
 RICCHARD_ABILITIES = {
     "basic_attack": {
@@ -80,25 +89,11 @@ RICCHARD_ABILITIES = {
     }
 }
 
-RICCHARD_STATS = {
-    'max_hp': 100,
-    'current_hp': 100, 
-    'max_ph': 130,
-    'current_ph': 130,
-    'attack': 100,
-    'defense': 40,
-    'speed': 20,
-    'max_energy': 120
-}
-
-# 🎯 CONFIGURACIÓN DE ENERGÍA PARA RICCHARD
 RICCHARD_ENERGY_SOURCES = {
     'on_hit': {'base': 10, 'type': 'flat'},
     'on_take_damage': {'base': 8, 'type': 'flat'},  
     'on_ability_use': {'base': 12, 'type': 'flat'},
     'on_kill': {'base': 30, 'type': 'flat'},
-    'on_heal': {'base': 5, 'type': 'flat'},
-    'on_buff': {'base': 8, 'type': 'flat'},
     'per_turn': {'base': 8, 'type': 'flat'},
     'on_void_ability': {'base': 15, 'type': 'flat'}
 }
@@ -108,6 +103,5 @@ RICCHARD_ENERGY_MULTIPLIERS = {
     'energy_damage': 1.2,
     'void_damage': 2.0,
     'light_damage': 1.0,
-    'storm_damage': 1.0,
-    'ultimate_ability': 0.0
+    'storm_damage': 1.0
 }
