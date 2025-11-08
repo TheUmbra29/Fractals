@@ -1,5 +1,9 @@
+"""
+Sistema de fábrica de habilidades - VERSIÓN CORREGIDA SIN IMPORTACIONES CIRCULARES
+"""
 from game.core.action_base import BaseAction, ActionContext
 from game.core.event_system import event_system, EventTypes
+from game.core.logger import logger 
 
 class EffectComponent:
     """Componente base para todos los efectos de habilidades"""
@@ -49,7 +53,7 @@ class DamageEffect(EffectComponent):
                 'damage_type': damage_type
             })
             
-            print(f"⚔️ {context.caster.name} → {target.name}: {damage} daño")
+            logger.combat_event("Habilidad de daño", context.caster, target, damage=damage)
         
         return len(targets) > 0
     
@@ -103,9 +107,9 @@ class HealEffect(EffectComponent):
                     'ability': context.ability_name
                 })
                 
-                print(f"💚 {context.caster.name} → {target.name}: +{heal} HP")
+                logger.combat_event("Habilidad de curación", context.caster, target, healing=heal)
         
-        print(f"🏥 {context.caster.name} curó {total_healing} HP a {len(targets)} objetivos")
+        logger.debug(f"{context.caster.name} curó {total_healing} HP a {len(targets)} objetivos")
         return len(targets) > 0
     
     def _get_targets(self, context, aoe_radius, target_filter):
@@ -142,7 +146,7 @@ class MovementEffect(EffectComponent):
         if move_type == 'teleport' and context.target_position:
             old_pos = context.caster.position
             context.caster.position = context.target_position
-            print(f"✨ {context.caster.name} se teletransportó: {old_pos} → {context.target_position}")
+            logger.debug(f"{context.caster.name} se teletransportó: {old_pos} → {context.target_position}")
             return True
         
         elif move_type == 'line_movement' and context.extra_data:
@@ -153,13 +157,13 @@ class MovementEffect(EffectComponent):
             new_pos = self._calculate_line_end_position(old_pos, direction, max_length)
             
             context.caster.position = new_pos
-            print(f"💨 {context.caster.name} se desplaza en línea: {old_pos} → {new_pos}")
+            logger.debug(f"{context.caster.name} se desplaza en línea: {old_pos} → {new_pos}")
             return True
         
         elif move_type == 'post_action':
             context.caster.pending_post_action_move = True
             context.caster.post_action_move_range = range_distance
-            print(f"🎯 {context.caster.name} prepara movimiento posterior de {range_distance} casillas")
+            logger.debug(f"{context.caster.name} prepara movimiento posterior de {range_distance} casillas")
             return True
         
         return False
@@ -205,7 +209,7 @@ class BuffEffect(EffectComponent):
             targets = [context.caster]
         
         for target in targets:
-            print(f"🛡️ {target.name} recibe buff: {stat_buffs} por {duration} turnos")
+            logger.debug(f"{target.name} recibe buff: {stat_buffs} por {duration} turnos")
         
         return len(targets) > 0
 
@@ -221,7 +225,7 @@ class StatusEffect(EffectComponent):
         targets = self._get_targets(context, target_filter)
         
         for target in targets:
-            print(f"⚡ {target.name} recibe {status_type} (valor: {value}) por {duration} turnos")
+            logger.debug(f"{target.name} recibe {status_type} (valor: {value}) por {duration} turnos")
         
         return len(targets) > 0
     
@@ -246,14 +250,14 @@ class ChainMovementEffect(EffectComponent):
     
     def apply(self, context):
         if not context.entities or len(context.entities) == 0:
-            print("❌ ChainMovement: No hay objetivos para la cadena")
+            logger.warning("ChainMovement: No hay objetivos para la cadena")
             return False
         
         caster = context.caster
         targets = context.entities
         multipliers = self.config.get('multiplier', [1.0])
         
-        print(f"🎯 Iniciando movimiento en cadena con {len(targets)} objetivos")
+        logger.debug(f"Iniciando movimiento en cadena con {len(targets)} objetivos")
         
         total_damage = 0
         for i, target in enumerate(targets):
@@ -272,18 +276,18 @@ class ChainMovementEffect(EffectComponent):
                 'chain_position': i + 1
             })
             
-            print(f"⛓️ [{i+1}] {caster.name} → {target.name}: {damage} daño")
+            logger.combat_event(f"Ataque en cadena #{i+1}", caster, target, damage=damage)
         
         final_position = self._calculate_final_position(caster, targets)
         
         if final_position and self._is_position_valid(final_position, caster, context.entities):
             old_pos = caster.position
             caster.position = final_position
-            print(f"💨 {caster.name} se desplaza: {old_pos} → {final_position}")
+            logger.debug(f"{caster.name} se desplaza: {old_pos} → {final_position}")
         else:
-            print("❌ No se pudo calcular posición final válida")
+            logger.warning("No se pudo calcular posición final válida")
         
-        print(f"💥 Cadena completada: {total_damage} daño total")
+        logger.info(f"Cadena completada: {total_damage} daño total")
         return True
     
     def _calculate_damage(self, caster, target, multiplier):
@@ -346,7 +350,7 @@ class ResourceRecoveryEffect(EffectComponent):
                 )
                 actual_recovery = target.stats['current_ph'] - old_ph
                 if actual_recovery > 0:
-                    print(f"🔋 {target.name} recuperó {actual_recovery} PH")
+                    logger.debug(f"{target.name} recuperó {actual_recovery} PH")
             
             if energy_recovery > 0 and hasattr(target, 'gain_energy'):
                 target.gain_energy(energy_recovery, "ability_recovery")
@@ -354,20 +358,119 @@ class ResourceRecoveryEffect(EffectComponent):
         return True
 
 class ApplyEffectComponent(EffectComponent):
-    """Componente para aplicar efectos del sistema data-driven"""
+    """Componente para aplicar efectos del sistema data-driven - VERSIÓN COMPLETA"""
     
     def apply(self, context):
         effect_id = self.config.get('effect_id')
         target_type = self.config.get('target', 'enemy')
+        aoe_radius = self.config.get('aoe_radius', 0)
         
         if not effect_id:
+            logger.warning("ApplyEffectComponent: effect_id no especificado")
             return False
         
-        print(f"⚡ [SISTEMA EFECTOS] {context.caster.name} aplicaría {effect_id} a {target_type}")
+        try:
+            # Obtener el sistema de efectos del contexto
+            effect_system = context.extra_data.get('effect_system') if hasattr(context, 'extra_data') else None
+            
+            if not effect_system:
+                # Intentar encontrar el effect_system alternativamente
+                effect_system = self._find_effect_system(context)
+                if not effect_system:
+                    logger.warning("No se pudo encontrar EffectSystem en el contexto")
+                    return False
+            
+            # Determinar objetivos basados en target_type y aoe_radius
+            targets = self._get_targets(context, target_type, aoe_radius)
+            if not targets:
+                logger.warning(f"No se encontraron objetivos para {effect_id} (tipo: {target_type})")
+                return False
+            
+            # Aplicar efecto a cada objetivo
+            success_count = 0
+            for target in targets:
+                if effect_system.apply_effect(target, effect_id, context.caster):
+                    success_count += 1
+                    logger.debug(f"✨ {effect_id} aplicado a {target.name}")
+                else:
+                    logger.warning(f"❌ No se pudo aplicar {effect_id} a {target.name}")
+            
+            logger.info(f"ApplyEffect: {success_count}/{len(targets)} objetivos afectados por {effect_id}")
+            return success_count > 0
+            
+        except Exception as e:
+            logger.error(f"Error en ApplyEffectComponent para {effect_id}", exception=e)
+            return False
+    
+    def _find_effect_system(self, context):
+        """Encuentra el effect_system de forma segura - MEJORADO"""
+        # Método 1: Desde battle_scene en el caster
+        if hasattr(context.caster, 'battle_scene'):
+            return context.caster.battle_scene.get_effect_system()
         
-        # Por ahora solo retornamos True para que la habilidad se ejecute
-        # Más adelante conectaremos con el EffectSystem real
-        return True
+        # Método 2: Desde entities en el contexto
+        for entity in context.entities:
+            if hasattr(entity, 'battle_scene'):
+                return entity.battle_scene.get_effect_system()
+        
+        # Método 3: Buscar en extra_data
+        if hasattr(context, 'extra_data') and 'effect_system' in context.extra_data:
+            return context.extra_data['effect_system']
+        
+        logger.warning("No se pudo encontrar EffectSystem mediante ningún método")
+        return None
+    
+    def _get_targets(self, context, target_type, aoe_radius):
+        """Obtiene objetivos basados en target_type y aoe_radius - MEJORADO"""
+        targets = []
+        
+        if aoe_radius > 0 and context.target_position:
+            # AOE alrededor de una posición
+            for entity in context.entities:
+                distance = self._calculate_distance(context.target_position, entity.position)
+                if distance <= aoe_radius and self._is_valid_target(entity, context.caster, target_type):
+                    targets.append(entity)
+        elif target_type == 'self':
+            targets = [context.caster]
+        elif target_type == 'selected' and context.target:
+            targets = [context.target] if self._is_valid_target(context.target, context.caster, target_type) else []
+        elif target_type == 'enemy' and context.target:
+            targets = [context.target] if context.target.team != context.caster.team else []
+        elif target_type == 'ally' and context.target:
+            targets = [context.target] if context.target.team == context.caster.team else []
+        elif target_type == 'allies':
+            targets = [e for e in context.entities if e.team == context.caster.team and e != context.caster]
+        elif target_type == 'all_allies':
+            targets = [e for e in context.entities if e.team == context.caster.team]
+        elif target_type == 'enemies':
+            targets = [e for e in context.entities if e.team != context.caster.team]
+        elif target_type == 'all':
+            targets = [e for e in context.entities if e != context.caster]
+        else:
+            # Fallback: usar el target si existe
+            if context.target and self._is_valid_target(context.target, context.caster, target_type):
+                targets = [context.target]
+            else:
+                targets = [context.caster]
+        
+        return targets
+    
+    def _is_valid_target(self, target, caster, target_type):
+        """Determina si un objetivo es válido para el tipo de objetivo"""
+        if target_type == 'self':
+            return target == caster
+        elif target_type == 'enemy':
+            return target.team != caster.team
+        elif target_type == 'ally':
+            return target.team == caster.team and target != caster
+        elif target_type == 'allies':
+            return target.team == caster.team
+        elif target_type == 'enemies':
+            return target.team != caster.team
+        elif target_type == 'all':
+            return True
+        else:
+            return target.team != caster.team 
 
 class CleanseEffectsComponent(EffectComponent):
     """Limpia efectos negativos del objetivo"""
@@ -376,7 +479,7 @@ class CleanseEffectsComponent(EffectComponent):
         if not context.target:
             return False
         
-        print(f"✨ {context.caster.name} limpia efectos de {context.target.name}")
+        logger.debug(f"{context.caster.name} limpia efectos de {context.target.name}")
         return True
 
 class UltimateRechargeComponent(EffectComponent):
@@ -394,7 +497,7 @@ class UltimateRechargeComponent(EffectComponent):
                     target.energy_stats['max_energy'],
                     target.energy_stats['current_energy'] + recharge_amount
                 )
-                print(f"⚡ {target.name} recibe {recharge_amount} de energía ultimate")
+                logger.debug(f"{target.name} recibe {recharge_amount} de energía ultimate")
         
         return len(targets) > 0
     
@@ -476,7 +579,7 @@ class ComposableAbility(BaseAction):
                 'is_ultimate': False
             })
             
-            print(f"🎯 {context.caster.name} usó {self.name}!")
+            logger.ability_used(context.caster, self.name, context.target, success=True)
         
         return success
     
@@ -518,7 +621,7 @@ class UltimateAbility(ComposableAbility):
         
         if not context.caster.can_use_ultimate(self.ability_config):
             current_energy = context.caster.get_energy_absolute()
-            print(f"❌ Energía insuficiente: {current_energy}/{self.energy_cost}")
+            logger.warning(f"Energía insuficiente: {current_energy}/{self.energy_cost}")
             return False
         
         return True
@@ -548,7 +651,8 @@ class UltimateAbility(ComposableAbility):
                 'energy_cost': self.energy_cost
             })
             
-            print(f"💥💥💥 {context.caster.name} usó ULTIMATE: {self.name}!")
+            logger.ability_used(context.caster, self.name, context.target, success=True)
+            logger.info(f"🔥 ULTIMATE USADA: {self.name}!")
         
         return success
 

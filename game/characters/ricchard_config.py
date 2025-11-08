@@ -33,7 +33,7 @@ RICCHARD_ABILITIES = {
         "name": "Corte Fugaz", 
         "cost_ph": 40,
         "cooldown": 1,
-        "range": 1,
+        "range": 6,
         "selection_mode": "chain",
         "min_targets": 1,
         "max_targets": 3,

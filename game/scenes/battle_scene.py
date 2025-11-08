@@ -1,4 +1,3 @@
-# game/scenes/battle_scene.py
 import pygame
 from game.systems.grid_system import GridSystem
 from game.systems.turn_system import TurnSystem
@@ -14,6 +13,7 @@ from game.scenes.battle_states.movement_state import MovementState
 from game.scenes.battle_states.ability_state import AbilityState
 from game.scenes.battle_states.menu_state import MenuState
 from game.scenes.battle_states.targeting_state import TargetingState
+from game.core.logger import logger
 
 class BattleScene:
     def __init__(self, screen, player_party_ids=None, enemy_configs=None):
@@ -27,9 +27,18 @@ class BattleScene:
         self.entities = []
         self.selected_entity = None
         self.ability_menu = None
-                # 🆕 INICIALIZAR SISTEMA DE EFECTOS
         
-        # 🆕 SISTEMA DE ESTADOS
+        logger.info("BattleScene inicializando", {"screen_size": screen.get_size()})
+        
+        # ✅ INICIALIZAR SISTEMA DE EFECTOS
+        self.effect_system = EffectSystem()
+        
+        # ✅ CARGAR CONFIGURACIÓN DE EFECTOS
+        from game.data.effects import EFFECTS_CONFIG
+        self.effect_system.load_effects_config(EFFECTS_CONFIG)
+        logger.debug("Sistema de efectos cargado", {"effects_count": len(EFFECTS_CONFIG)})
+        
+        # ✅ SISTEMA DE ESTADOS
         self.states = {
             "idle": IdleState(self),
             "movement": MovementState(self), 
@@ -48,151 +57,243 @@ class BattleScene:
         
         self.setup_scalable_scenario(player_party_ids, enemy_configs)
         self.turn_system.start_player_turn()
-            # 🆕 INICIALIZAR SISTEMA DE EFECTOS
-        self.effect_system = EffectSystem()
-        
-        # 🆕 CARGAR CONFIGURACIÓN DE EFECTOS
-        from game.data.effects import EFFECTS_CONFIG
-        self.effect_system.load_effects_config(EFFECTS_CONFIG)
-        
-    # 🆕 MÉTODO PARA ACCEDER AL EFFECT_SYSTEM DESDE LOS COMPONENTES
+        logger.info("Escenario de batalla configurado y listo")
+    
+    # ✅ MÉTODO PARA ACCEDER AL EFFECT_SYSTEM DESDE LOS COMPONENTES
     def get_effect_system(self):
         return self.effect_system
     
     def setup_scalable_scenario(self, player_party_ids, enemy_configs):
-        """MÉTODO SE MANTIENE IGUAL - no cambios"""
-        start_positions = [(2, 2), (2, 4), (2, 6)]
-        player_party = CharacterFactory.create_party(
-            player_party_ids[:3], start_positions[:len(player_party_ids)]
-        )
-        
-        for character in player_party:
-            if hasattr(character, 'register_passives'):
-                character.register_passives(self.passive_system)
-        
-        enemies = [Enemy(config["position"], "enemy", config.get("name", "Enemigo")) 
-                  for config in enemy_configs]
-        
-        self.entities = player_party + enemies
-        print(f"✅ Equipo: {[p.name for p in player_party]}")
-        print(f"✅ Enemigos: {[e.name for e in enemies]}")
-        print("🎯 Estados activos: Idle (selección) | Movement (M) | Ability (H)")
+        """MÉTODO SE MANTIENE IGUAL - con logging mejorado"""
+        try:
+            start_positions = [(2, 2), (2, 4), (2, 6)]
+            player_party = CharacterFactory.create_party(
+                player_party_ids[:3], start_positions[:len(player_party_ids)]
+            )
+            
+            for character in player_party:
+                if hasattr(character, 'register_passives'):
+                    character.register_passives(self.passive_system)
+                # ✅ CONECTAR BATTLE_SCENE A LAS ENTIDADES
+                character.battle_scene = self
+            
+            enemies = [Enemy(config["position"], "enemy", config.get("name", "Enemigo")) 
+                      for config in enemy_configs]
+            
+            self.entities = player_party + enemies
+            
+            logger.info(
+                "Escenario configurado",
+                {
+                    "equipo": [p.name for p in player_party],
+                    "enemigos": [e.name for e in enemies],
+                    "total_entidades": len(self.entities)
+                }
+            )
+            
+        except Exception as e:
+            logger.error("Error configurando escenario", exception=e)
+            # Fallback básico
+            self.entities = []
     
-    # 🆕 MÉTODOS DE GESTIÓN DE ESTADOS
+    # ✅ MÉTODOS DE GESTIÓN DE ESTADOS CON MANEJO DE ERRORES
     def set_state(self, new_state_name):
-        """Cambia al estado especificado"""
-        if new_state_name not in self.states or self.states[new_state_name] is None:
-            print(f"❌ Estado no disponible: {new_state_name}")
-            return
-        
-        if self.current_state.name == new_state_name:
-            return
-        
-        print(f"🔄 Cambiando estado: {self.current_state.name} → {new_state_name}")
-        self.current_state.exit()
-        self.current_state = self.states[new_state_name]
-        self.current_state.enter()
+        """Cambia al estado especificado - CON MANEJO DE ERRORES"""
+        try:
+            if new_state_name not in self.states or self.states[new_state_name] is None:
+                logger.warning(f"Estado no disponible: {new_state_name}")
+                return
+            
+            if self.current_state.name == new_state_name:
+                return
+            
+            logger.state_change(
+                self.current_state.name, 
+                new_state_name, 
+                self.selected_entity
+            )
+            
+            self.current_state.exit()
+            self.current_state = self.states[new_state_name]
+            self.current_state.enter()
+            
+        except Exception as e:
+            logger.error(
+                f"Error crítico cambiando estado a {new_state_name}",
+                exception=e,
+                context={
+                    "estado_actual": self.current_state.name,
+                    "nuevo_estado": new_state_name
+                }
+            )
+            # Fallback seguro
+            if "idle" in self.states and self.states["idle"] is not None:
+                self.current_state = self.states["idle"]
+                self.current_state.enter()
     
-    # 🆕 MÉTODOS DELEGADOS A LOS ESTADOS
+    # ✅ MÉTODOS DELEGADOS A LOS ESTADOS CON LOGGING
     def handle_event(self, event):
         """Delega el manejo de eventos al estado actual"""
-        if self.ability_menu and self.ability_menu.visible:
-            self._handle_ability_menu_event(event)
-        else:
-            self.current_state.handle_event(event)
+        try:
+            if self.ability_menu and self.ability_menu.visible:
+                self._handle_ability_menu_event(event)
+            else:
+                self.current_state.handle_event(event)
+        except Exception as e:
+            logger.error(
+                "Error manejando evento",
+                exception=e,
+                context={
+                    "event_type": event.type,
+                    "estado_actual": self.current_state.name
+                }
+            )
     
     def update(self):
         """Delega la actualización al estado actual"""
-        self.current_state.update()
+        try:
+            self.current_state.update()
+        except Exception as e:
+            logger.error(
+                "Error en update del estado actual",
+                exception=e,
+                context={"estado_actual": self.current_state.name}
+            )
     
     def draw(self):
         """Dibuja elementos comunes y delega al estado actual"""
-        self.screen.fill((30, 30, 60))
-        self.grid.draw(self.screen)
-        
-        # 🆕 El estado actual dibuja sus elementos específicos
-        self.current_state.draw()
-        
-        # Elementos comunes (siempre se dibujan)
-        for entity in self.entities:
-            entity.draw(self.screen, self.grid)
-        
-        if self.ability_menu:
-            self.ability_menu.draw()
-        
-        self.draw_ui()
+        try:
+            self.screen.fill((30, 30, 60))
+            self.grid.draw(self.screen)
+            
+            # ✅ El estado actual dibuja sus elementos específicos
+            self.current_state.draw()
+            
+            # Elementos comunes (siempre se dibujan)
+            for entity in self.entities:
+                entity.draw(self.screen, self.grid)
+            
+            if self.ability_menu:
+                self.ability_menu.draw()
+            
+            self.draw_ui()
+            
+        except Exception as e:
+            logger.error("Error crítico en draw", exception=e)
+            # Intentar recuperación básica
+            self.screen.fill((255, 0, 0))  # Fondo rojo de error
+            font = pygame.font.SysFont(None, 36)
+            error_text = font.render("ERROR EN DIBUJADO", True, (255, 255, 255))
+            self.screen.blit(error_text, (100, 100))
     
-    # 🎯 MÉTODOS DE COMPATIBILIDAD (para estados y código existente)
-    def enter_movement_mode(self):
-        """Interface para estados - cambia a movimiento"""
-        self.set_state("movement")
-    
+    # ✅ MÉTODOS DE COMPATIBILIDAD MEJORADOS
     def open_ability_menu(self):
         """Interface para estados - abre menú de habilidades"""
         if not self.selected_entity or self.selected_entity.has_acted:
-            return print("❌ No se puede usar habilidades")
+            logger.warning("Intento de abrir menú de habilidades sin entidad válida")
+            return
         
-        screen_pos = self.grid.get_screen_position(self.selected_entity.position)
-        self.ability_menu = AbilityMenu(self.screen, self.selected_entity, screen_pos)
-        self.ability_menu.show()
+        try:
+            screen_pos = self.grid.get_screen_position(self.selected_entity.position)
+            self.ability_menu = AbilityMenu(self.screen, self.selected_entity, screen_pos)
+            self.ability_menu.show()
+            logger.debug("Menú de habilidades abierto", {"entidad": self.selected_entity.name})
+        except Exception as e:
+            logger.error("Error abriendo menú de habilidades", exception=e)
     
     def on_ability_selected(self, ability_data):
         """Interface cuando se selecciona habilidad del menú"""
-        print(f"🎯 {self.selected_entity.name} prepara {ability_data['name']}")
-        
-        if self.ability_system.select_ability(ability_data, self.selected_entity, self.entities):
-            self.set_state("ability")
-        
-        self.ability_menu = None
+        try:
+            logger.info(
+                f"{self.selected_entity.name} prepara {ability_data['name']}",
+                {
+                    "ability": ability_data['name'],
+                    "cost_ph": ability_data.get('cost_ph', 0),
+                    "selection_mode": ability_data.get('selection_mode', 'enemy')
+                }
+            )
+            
+            # ✅ Usar el nuevo contexto con effect_system
+            context = self.create_ability_context(self.selected_entity)
+            
+            if self.ability_system.select_ability(ability_data, self.selected_entity, self.entities):
+                self.set_state("ability")
+            
+            self.ability_menu = None
+            
+        except Exception as e:
+            logger.error(
+                "Error seleccionando habilidad del menú",
+                exception=e,
+                context={
+                    "entidad": self.selected_entity.name,
+                    "habilidad": ability_data['name']
+                }
+            )
+            self.ability_menu = None
     
     def clear_selections(self):
         """Limpia selecciones y vuelve a idle"""
-        self.selected_entity = None
-        self.ability_system.clear_selection()
-        self.ability_menu = None
-        self.movement_system.cancel()
-        self.set_state("idle")
+        try:
+            self.selected_entity = None
+            self.ability_system.clear_selection()
+            self.ability_menu = None
+            self.movement_system.cancel()
+            self.set_state("idle")
+            logger.debug("Selecciones limpiadas")
+        except Exception as e:
+            logger.error("Error limpiando selecciones", exception=e)
     
     def end_turn(self):
-        print("🔄 Terminando turno...")
-        self.effect_system.update_effects(self.entities)  # 🆕 ACTUALIZAR EFECTOS
-        self.set_state("idle")
-        
-        for entity in self.entities:
-            if entity.team == self.turn_system.current_turn:
-                entity.reset_turn()
-        
-        self.clear_selections()
-        self.turn_system.end_turn()
-        
-        if self.turn_system.current_turn == "enemy":
-            self.do_enemy_turn()
+        """Termina el turno actual con logging"""
+        try:
+            logger.info("Terminando turno...", {"turno_actual": self.turn_system.current_turn})
+            
+            self.effect_system.update_effects(self.entities)
+            self.set_state("idle")
+            
+            for entity in self.entities:
+                if entity.team == self.turn_system.current_turn:
+                    entity.reset_turn()
+            
+            self.clear_selections()
+            self.turn_system.end_turn()
+            
+            if self.turn_system.current_turn == "enemy":
+                self.do_enemy_turn()
+                
+        except Exception as e:
+            logger.error("Error terminando turno", exception=e)
     
-    def start_turn(self, entity):
-        """Llamar al inicio del turno de una entidad"""
-        self.effect_system.on_turn_start(entity)  # 🆕 NOTIFICAR EFECTOS
-    
-    # 🎯 MÉTODOS PRIVADOS QUE SE MANTIENEN
+    # ✅ MÉTODOS PRIVADOS MEJORADOS
     def _handle_ability_menu_event(self, event):
-        """Maneja eventos del menú de habilidades"""
-        if event.type == pygame.KEYDOWN:
-            result = self.ability_menu.handle_input(event.key)
-            if result == "cancel":
-                self.ability_menu = None
-                print("❌ Menú cancelado")
-            elif result:
-                self.on_ability_selected(result)
+        """Maneja eventos del menú de habilidades con logging"""
+        try:
+            if event.type == pygame.KEYDOWN:
+                result = self.ability_menu.handle_input(event.key)
+                if result == "cancel":
+                    self.ability_menu = None
+                    logger.debug("Menú de habilidades cancelado")
+                elif result:
+                    self.on_ability_selected(result)
+        except Exception as e:
+            logger.error("Error manejando evento del menú de habilidades", exception=e)
     
     def do_enemy_turn(self):
-        """Turno del enemigo - se mantiene igual"""
-        print("🤖 Turno del enemigo...")
-        for entity in self.entities:
-            if entity.team == "enemy" and not entity.has_acted:
-                entity.has_acted = True
-        
-        pygame.time.set_timer(pygame.USEREVENT, 1000)
-    
-# En game/scenes/battle_scene.py - MÉTODO draw_ui()
+        """Turno del enemigo - con logging"""
+        try:
+            logger.info("Iniciando turno del enemigo...")
+            
+            for entity in self.entities:
+                if entity.team == "enemy" and not entity.has_acted:
+                    entity.has_acted = True
+            
+            pygame.time.set_timer(pygame.USEREVENT, 1000)
+            logger.debug("Timer de turno enemigo configurado")
+            
+        except Exception as e:
+            logger.error("Error en turno del enemigo", exception=e)
+
     def draw_ui(self):
         """UI común - ACTUALIZADO para state pattern"""
         font = pygame.font.SysFont(None, 36)
@@ -268,3 +369,39 @@ class BattleScene:
         """Inicia selección avanzada de objetivos"""
         self.states["targeting"] = TargetingState(self, ability_data, targeting_type)
         self.set_state("targeting")
+
+    def create_ability_context(self, caster, target=None, target_position=None, entities=None):
+        """Crea contexto para habilidades incluyendo effect_system - VERSIÓN MEJORADA"""
+        from game.core.action_base import ActionContext
+        
+        # Usar las entidades proporcionadas o las de la escena
+        context_entities = entities if entities is not None else self.entities
+        
+        context = ActionContext(
+            caster=caster,
+            target=target,
+            target_position=target_position,
+            entities=context_entities
+        )
+        
+        # ✅ Asegurar que el context tenga effect_system y battle_scene
+        if not hasattr(context, 'extra_data'):
+            context.extra_data = {}
+        
+        context.extra_data.update({
+            'effect_system': self.effect_system,
+            'battle_scene': self,
+            'turn_system': self.turn_system
+        })
+        
+        logger.debug(
+            "Contexto de habilidad creado", 
+            {
+                "caster": caster.name,
+                "target": target.name if target else "None", 
+                "target_position": target_position,
+                "entities_count": len(context_entities)
+            }
+        )
+        
+        return context
