@@ -2,7 +2,7 @@
 Sistema de efectos - VERSIÓN CORREGIDA SIN IMPORTACIONES CIRCULARES
 """
 from typing import Dict, List, Any
-from game.core.logger import logger 
+from game.core.logger import logger
 
 class GenericEffect:
     """Efecto genérico que se configura completamente por datos"""
@@ -163,7 +163,7 @@ class GenericEffect:
         return False
     
     def _execute_custom_callback(self, callback_name, target, extra_data):
-        """Ejecuta callbacks personalizados de forma segura"""
+        """Ejecuta callbacks usando duck typing en lugar de imports específicos"""
         try:
             if callback_name == "enable_improved_dash":
                 return self._callback_enable_improved_dash(target)
@@ -179,16 +179,16 @@ class GenericEffect:
             return False
     
     def _callback_enable_improved_dash(self, target):
-        """Habilita embestida mejorada"""
+        """Usa hasattr en lugar de asumir el tipo específico"""
         if hasattr(target, 'pending_post_action_move'):
             target.pending_post_action_move = True
-            target.post_action_move_range = 3  # Rango mejorado
-            logger.info(f"🚀 {target.name} obtiene embestida mejorada!")
+            target.post_action_move_range = 3
+            logger.info(f"🛵 {target.name} obtiene embestida mejorada!")
             return True
         return False
     
     def _callback_recharge_ultimate(self, target):
-        """Recarga energía ultimate"""
+        """Verifica la existencia de energy_stats dinámicamente"""
         if hasattr(target, 'energy_stats'):
             target.energy_stats['current_energy'] = target.energy_stats['max_energy']
             logger.info(f"⚡ {target.name} recarga energía ultimate al máximo!")
@@ -196,11 +196,13 @@ class GenericEffect:
         return False
     
     def _callback_hyper_speed(self, target):
-        """Aplica hipervelocidad"""
-        original_speed = target.stats.get('speed', 10)
-        target.stats['speed'] = original_speed + 50  # Bonus grande
-        logger.info(f"💨 {target.name} obtiene hipervelocidad! (+50 velocidad)")
-        return True
+        """Accede a stats de forma genérica"""
+        if hasattr(target, 'stats') and 'speed' in target.stats:
+            original_speed = target.stats.get('speed', 10)
+            target.stats['speed'] = original_speed + 50
+            logger.info(f"🎯 {target.name} obtiene hipervelocidad! (+50 velocidad)")
+            return True
+        return False
     
     def _calculate_value(self, base_value, calculation_config, target):
         """Calcula valores basado en fórmulas"""

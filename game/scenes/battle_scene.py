@@ -2,7 +2,7 @@ import pygame
 from game.systems.grid_system import GridSystem
 from game.systems.turn_system import TurnSystem
 from game.systems.ability_system import AbilitySystem
-from game.systems.effect_system import EffectSystem
+from game.systems.effect_system import EffectSystem  
 from game.systems.passive_system import PassiveSystem
 from game.systems.movement_system import MovementSystem
 from game.ui.ability_menu import AbilityMenu
@@ -20,20 +20,24 @@ class BattleScene:
         self.screen = screen
         self.grid = GridSystem()
         self.turn_system = TurnSystem()
-        self.ability_system = AbilitySystem(self.grid)
+        
+        # ✅ ORDEN CORRECTO: effect_system PRIMERO
         self.effect_system = EffectSystem()
+        
+        # ✅ LUEGO ability_system que depende de effect_system
+        self.ability_system = AbilitySystem(self.grid, self.effect_system)
+        
+        # Los demás sistemas
         self.passive_system = PassiveSystem()
         self.movement_system = MovementSystem(self.grid)
+        
         self.entities = []
         self.selected_entity = None
         self.ability_menu = None
         
         logger.info("BattleScene inicializando", {"screen_size": screen.get_size()})
         
-        # ✅ INICIALIZAR SISTEMA DE EFECTOS
-        self.effect_system = EffectSystem()
-        
-        # ✅ CARGAR CONFIGURACIÓN DE EFECTOS
+        # ✅ CARGAR CONFIGURACIÓN DE EFECTOS (esto debe ir DESPUÉS de crear effect_system)
         from game.data.effects import EFFECTS_CONFIG
         self.effect_system.load_effects_config(EFFECTS_CONFIG)
         logger.debug("Sistema de efectos cargado", {"effects_count": len(EFFECTS_CONFIG)})

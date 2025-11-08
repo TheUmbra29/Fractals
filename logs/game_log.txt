@@ -1,0 +1,145 @@
+[2025-11-08 14:42:53] [DEBUG] EffectSystem inicializado
+[2025-11-08 14:42:53] [DEBUG] AbilitySystem inicializado
+[2025-11-08 14:42:53] [INFO] BattleScene inicializando
+[2025-11-08 14:42:53] [INFO] EffectSystem cargó 8 efectos
+[2025-11-08 14:42:53] [DEBUG] Sistema de efectos cargado
+[2025-11-08 14:42:53] [INFO] Escenario configurado
+[2025-11-08 14:42:53] [INFO] Escenario de batalla configurado y listo
+[2025-11-08 14:43:10] [DEBUG] EffectSystem inicializado
+[2025-11-08 14:43:10] [DEBUG] AbilitySystem inicializado
+[2025-11-08 14:43:10] [INFO] BattleScene inicializando
+[2025-11-08 14:43:10] [INFO] EffectSystem cargó 8 efectos
+[2025-11-08 14:43:10] [DEBUG] Sistema de efectos cargado
+[2025-11-08 14:43:10] [INFO] Escenario configurado
+[2025-11-08 14:43:10] [INFO] Escenario de batalla configurado y listo
+[2025-11-08 14:43:12] [STATE] 🔄 [14:43:12] STATE: IdleState → movement | Entidad: Ricchard
+[2025-11-08 14:43:16] [STATE] 🔄 [14:43:16] STATE: MovementState → idle | Entidad: Ricchard
+[2025-11-08 14:43:17] [DEBUG] Menú de habilidades abierto
+[2025-11-08 14:43:19] [INFO] Ricchard prepara Corte Fugaz
+[2025-11-08 14:43:19] [DEBUG] Contexto de habilidad creado
+[2025-11-08 14:43:19] [INFO] Modo chain activado para Corte Fugaz
+[2025-11-08 14:43:19] [STATE] 🔄 [14:43:19] STATE: IdleState → ability | Entidad: Ricchard
+[2025-11-08 14:43:21] [DEBUG] Iniciando movimiento en cadena con 2 objetivos
+[2025-11-08 14:43:21] [COMBAT] ⚔️ [14:43:21] COMBAT: Ataque en cadena #1 | Atacante: Ricchard | Objetivo: Goblin | Daño: 49
+[2025-11-08 14:43:21] [COMBAT] ⚔️ [14:43:21] COMBAT: Ataque en cadena #2 | Atacante: Ricchard | Objetivo: Orco | Daño: 63
+[2025-11-08 14:43:21] [DEBUG] Ricchard se desplaza: (6, 6) → (8, 2)
+[2025-11-08 14:43:21] [INFO] Cadena completada: 112 daño total
+[2025-11-08 14:43:21] [ABILITY] ✅ [14:43:21] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 14:43:21] [DEBUG] Iniciando movimiento en cadena con 2 objetivos
+[2025-11-08 14:43:21] [COMBAT] ⚔️ [14:43:21] COMBAT: Ataque en cadena #1 | Atacante: Ricchard | Objetivo: Goblin | Daño: 49
+[2025-11-08 14:43:21] [COMBAT] ⚔️ [14:43:21] COMBAT: Ataque en cadena #2 | Atacante: Ricchard | Objetivo: Orco | Daño: 63
+[2025-11-08 14:43:21] [DEBUG] Ricchard se desplaza: (8, 2) → (6, 4)
+[2025-11-08 14:43:21] [INFO] Cadena completada: 112 daño total
+[2025-11-08 14:43:21] [ABILITY] ✅ [14:43:21] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 14:43:21] [ABILITY] ✅ [14:43:21] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 14:43:21] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 14:43:21] [STATE] 🔄 [14:43:21] STATE: AbilityState → idle | Entidad: Ricchard
+[2025-11-08 14:43:28] [STATE] 🔄 [14:43:28] STATE: IdleState → movement | Entidad: Zoe
+[2025-11-08 14:43:34] [STATE] 🔄 [14:43:34] STATE: MovementState → idle | Entidad: Zoe
+[2025-11-08 14:43:42] [DEBUG] Menú de habilidades abierto
+[2025-11-08 14:43:44] [INFO] Zoe prepara Grito de Tempestad
+[2025-11-08 14:43:44] [DEBUG] Contexto de habilidad creado
+[2025-11-08 14:43:44] [INFO] Modo global_ally activado para Grito de Tempestad
+[2025-11-08 14:43:44] [STATE] 🔄 [14:43:44] STATE: IdleState → ability | Entidad: Zoe
+[2025-11-08 14:43:46] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:46] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:46] [ABILITY] ❌ [14:43:46] ABILITY: Zoe -> Grito de Tempestad -> Ricchard
+[2025-11-08 14:43:46] [WARNING] Habilidad Grito de Tempestad falló al ejecutarse
+[2025-11-08 14:43:54] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:54] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:54] [ABILITY] ❌ [14:43:54] ABILITY: Zoe -> Grito de Tempestad -> Red Thunder
+[2025-11-08 14:43:54] [WARNING] Habilidad Grito de Tempestad falló al ejecutarse
+[2025-11-08 14:43:54] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:54] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:54] [ABILITY] ❌ [14:43:54] ABILITY: Zoe -> Grito de Tempestad -> Red Thunder
+[2025-11-08 14:43:54] [WARNING] Habilidad Grito de Tempestad falló al ejecutarse
+[2025-11-08 14:43:55] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:55] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:55] [ABILITY] ❌ [14:43:55] ABILITY: Zoe -> Grito de Tempestad -> Red Thunder
+[2025-11-08 14:43:55] [WARNING] Habilidad Grito de Tempestad falló al ejecutarse
+[2025-11-08 14:43:55] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:55] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:55] [ABILITY] ❌ [14:43:55] ABILITY: Zoe -> Grito de Tempestad -> Red Thunder
+[2025-11-08 14:43:55] [WARNING] Habilidad Grito de Tempestad falló al ejecutarse
+[2025-11-08 14:43:56] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:56] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 14:43:56] [ABILITY] ❌ [14:43:56] ABILITY: Zoe -> Grito de Tempestad -> Ricchard
+[2025-11-08 14:43:56] [WARNING] Habilidad Grito de Tempestad falló al ejecutarse
+[2025-11-08 14:43:58] [STATE] 🔄 [14:43:58] STATE: AbilityState → idle | Entidad: Zoe
+[2025-11-08 14:44:00] [DEBUG] Menú de habilidades abierto
+[2025-11-08 14:44:02] [INFO] Zoe prepara Torbellino de Fe
+[2025-11-08 14:44:02] [DEBUG] Contexto de habilidad creado
+[2025-11-08 14:44:02] [INFO] Modo position activado para Torbellino de Fe
+[2025-11-08 14:44:02] [STATE] 🔄 [14:44:02] STATE: IdleState → ability | Entidad: Zoe
+[2025-11-08 14:44:03] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 14:44:03] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 14:44:03] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 14:44:03] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 14:44:03] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 14:44:03] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 14:44:03] [ABILITY] ❌ [14:44:03] ABILITY: Zoe -> Torbellino de Fe
+[2025-11-08 14:44:03] [WARNING] Habilidad Torbellino de Fe falló al ejecutarse
+[2025-11-08 14:44:04] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 14:44:04] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 14:44:04] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 14:44:04] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 14:44:04] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 14:44:04] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 14:44:04] [ABILITY] ❌ [14:44:04] ABILITY: Zoe -> Torbellino de Fe
+[2025-11-08 14:44:04] [WARNING] Habilidad Torbellino de Fe falló al ejecutarse
+[2025-11-08 14:44:07] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 14:44:07] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 14:44:07] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 14:44:07] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 14:44:07] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 14:44:07] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 14:44:07] [ABILITY] ❌ [14:44:07] ABILITY: Zoe -> Torbellino de Fe
+[2025-11-08 14:44:07] [WARNING] Habilidad Torbellino de Fe falló al ejecutarse
+[2025-11-08 14:44:08] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 14:44:08] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 14:44:08] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 14:44:08] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 14:44:08] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 14:44:08] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 14:44:08] [ABILITY] ❌ [14:44:08] ABILITY: Zoe -> Torbellino de Fe
+[2025-11-08 14:44:08] [WARNING] Habilidad Torbellino de Fe falló al ejecutarse
+[2025-11-08 14:44:09] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 14:44:09] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 14:44:09] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 14:44:09] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 14:44:09] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 14:44:09] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 14:44:09] [ABILITY] ❌ [14:44:09] ABILITY: Zoe -> Torbellino de Fe
+[2025-11-08 14:44:09] [WARNING] Habilidad Torbellino de Fe falló al ejecutarse
+[2025-11-08 14:56:22] [COMBAT] ⚔️ [14:56:22] COMBAT: Habilidad de daño | Atacante: Ricchard | Objetivo: Enemigo | Daño: 39
+[2025-11-08 14:56:22] [ABILITY] ✅ [14:56:22] ABILITY: Ricchard -> AMP -> Enemigo
+[2025-11-08 14:56:22] [DEBUG] Iniciando movimiento en cadena con 3 objetivos
+[2025-11-08 14:56:22] [COMBAT] ⚔️ [14:56:22] COMBAT: Ataque en cadena #1 | Atacante: Ricchard | Objetivo: Enemigo1 | Daño: 49
+[2025-11-08 14:56:22] [COMBAT] ⚔️ [14:56:22] COMBAT: Ataque en cadena #2 | Atacante: Ricchard | Objetivo: Enemigo2 | Daño: 63
+[2025-11-08 14:56:22] [COMBAT] ⚔️ [14:56:22] COMBAT: Ataque en cadena #3 | Atacante: Ricchard | Objetivo: Enemigo3 | Daño: 88
+[2025-11-08 14:56:22] [DEBUG] Ricchard se desplaza: (0, 0) → (4, 0)
+[2025-11-08 14:56:22] [INFO] Cadena completada: 200 daño total
+[2025-11-08 14:56:22] [ABILITY] ✅ [14:56:22] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 14:56:22] [DEBUG] Ricchard se teletransportó: (0, 0) → (3, 3)
+[2025-11-08 14:56:22] [ABILITY] ✅ [14:56:22] ABILITY: Ricchard -> Destello Vácuo
+[2025-11-08 14:56:22] [WARNING] Energía insuficiente: 0/120
+[2025-11-08 14:56:22] [COMBAT] ⚔️ [14:56:22] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Enemigo | Daño: 17
+[2025-11-08 14:56:22] [ABILITY] ✅ [14:56:22] ABILITY: Red Thunder -> Disparo Relámpago -> Enemigo
+[2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 14:56:22] [COMBAT] ⚔️ [14:56:22] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Enemigo1 | Daño: 61
+[2025-11-08 14:56:22] [COMBAT] ⚔️ [14:56:22] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Enemigo2 | Daño: 61
+[2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 14:56:22] [ABILITY] ✅ [14:56:22] ABILITY: Red Thunder -> Red Thunderblast
+[2025-11-08 14:56:22] [WARNING] Energía insuficiente: 0/100
+[2025-11-08 14:56:22] [COMBAT] ⚔️ [14:56:22] COMBAT: Habilidad de daño | Atacante: Zoe | Objetivo: Enemigo | Daño: 23
+[2025-11-08 14:56:22] [ABILITY] ✅ [14:56:22] ABILITY: Zoe -> Toque de Luz -> Enemigo
+[2025-11-08 14:56:22] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 14:56:22] [WARNING] Energía insuficiente: 0/120

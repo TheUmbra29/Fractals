@@ -4,12 +4,20 @@ from game.systems.selection_system import SelectionSystem
 from game.core.logger import logger
 
 class AbilitySystem:
-    def __init__(self, grid_system):
+    def __init__(self, grid_system, effect_system=None):
         self.grid_system = grid_system
+        self.effect_system = effect_system  
         self.selected_ability = None
         self.caster = None
         self.selection_system = SelectionSystem(self)
-        logger.debug("AbilitySystem inicializado", {"grid_system": type(grid_system).__name__})
+        logger.debug("AbilitySystem inicializado", {
+            "grid_system": type(grid_system).__name__,
+            "effect_system": "provided" if effect_system else "not provided"
+        })
+    
+    def set_effect_system(self, effect_system):
+        """Setter para inyección de dependencias tardía"""
+        self.effect_system = effect_system
     
     def select_ability(self, ability_data, caster, entities):
         if caster.has_acted:
@@ -64,18 +72,16 @@ class AbilitySystem:
         try:
             ability_key = self.selected_ability['key']
             if ability_key in self.caster.actions:
-                logger.debug(
-                    f"Ejecutando habilidad {self.selected_ability['name']}",
-                    {
-                        "caster": self.caster.name,
-                        "ability_key": ability_key,
-                        "target": context.target.name if context.target else "None",
-                        "target_position": context.target_position,
-                        "entities_count": len(context.entities)
-                    }
-                )
+                # ✅ Asegurar que el contexto tenga effect_system
+                if not hasattr(context, 'extra_data'):
+                    context.extra_data = {}
                 
-                # ✅ Asegurar que el contexto tenga la información necesaria
+                # ✅ Usar effect_system de AbilitySystem si está disponible
+                if 'effect_system' not in context.extra_data and self.effect_system:
+                    context.extra_data['effect_system'] = self.effect_system
+                
+                success = self.caster.perform_action(ability_key, context)
+
                 if not hasattr(context, 'extra_data'):
                     context.extra_data = {}
                 

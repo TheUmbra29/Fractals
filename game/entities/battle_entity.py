@@ -1,22 +1,34 @@
-# game/entities/battle_entity.py
-"""
-Entidad de batalla unificada - combina GameEntity + BaseCharacter
-Diseñada para ser la única clase de entidad en batalla
-"""
-
 from .game_entity import GameEntity
-from game.systems.ability_factory import AbilityFactory
 from game.core.event_system import event_system, EventTypes
+from game.core.config_manager import ConfigManager
 
 class BattleEntity(GameEntity):
-    """
-    Entidad completa para batallas - incluye sistema de energía, habilidades y pasivas
-    Reemplaza tanto Character como BaseCharacter
-    """
-    
-    def __init__(self, name, position, team="player", stats=None, 
-                 character_class="damage", abilities_config=None):
-        # Inicializar GameEntity con stats extendidas
+    def __init__(self, name=None, position=None, team="player", stats=None, 
+                 character_class="damage", abilities_config=None,
+                 character_id=None):
+        """
+        Constructor MEJORADO - maneja tanto carga manual como desde character_id
+        """
+        # ✅ CARGA DESDE CONFIGURACIÓN SI SE PROPORCIONA character_id
+        config_loaded = False
+        if character_id:
+            config = ConfigManager.get_instance().get_character_config(character_id)
+            if config:
+                name = config.get('name', name)
+                stats = config.get('stats', stats)
+                character_class = config.get('character_class', character_class)
+                abilities_config = config.get('abilities', abilities_config)
+                self.character_id = character_id  # Guardar para referencia
+                config_loaded = True
+                print(f"✅ {name} cargado desde configuración")
+        
+        # Validaciones básicas
+        if name is None:
+            name = "Unknown Entity"
+        if position is None:
+            position = (0, 0)
+        
+        # El resto del constructor igual...
         extended_stats = stats or {}
         if 'max_energy' not in extended_stats:
             extended_stats['max_energy'] = 100
@@ -30,36 +42,26 @@ class BattleEntity(GameEntity):
         self.post_action_move_range = 0
         self.base_movement = 3
         
-        # 🎯 SISTEMA DE ENERGÍA (de BaseCharacter)
+        # Sistema de energía
         self.energy_stats = {
             'current_energy': 0,
             'max_energy': self.stats.get('max_energy', 100),
-            'energy_sources': self.setup_energy_sources(),
-            'energy_gain_multipliers': self.setup_energy_multipliers()
+            'energy_sources': self.setup_energy_sources()
         }
         
         # Configurar habilidades y pasivas
         self.setup_abilities()
         self.setup_energy_listeners()
     
-    @property
-    def movement_range(self):
-        """Rango de movimiento calculado desde velocidad"""
-        speed_bonus = max(0, (self.stats.get('speed', 5) - 5) // 2)
-        return self.base_movement + speed_bonus
-    
-    def setup_abilities(self):
-        """Configura habilidades desde la configuración"""
-        for ability_key, ability_config in self.abilities_config.items():
-            ability_config_with_key = ability_config.copy()
-            ability_config_with_key['key'] = ability_key
-            ability_instance = AbilityFactory.create_ability(ability_config_with_key)
-            self.actions[ability_key] = ability_instance
-        
-        print(f"🎭 {self.name} - Habilidades: {list(self.actions.keys())}")
-    
-    # 🎯 MÉTODOS DE ENERGÍA (de BaseCharacter)
     def setup_energy_sources(self):
+        """Ahora puede cargar desde configuración"""
+        # Si tenemos character_id, intentar cargar desde config
+        if hasattr(self, 'character_id'):
+            config = ConfigManager.get_instance().get_character_config(self.character_id)
+            if config and 'energy_sources' in config:
+                return config['energy_sources'].copy()
+        
+        # Fallback a valores por defecto
         return {
             'on_hit': {'base': 8, 'type': 'flat'},
             'on_take_damage': {'base': 5, 'type': 'flat'},  
@@ -67,24 +69,31 @@ class BattleEntity(GameEntity):
             'on_kill': {'base': 25, 'type': 'flat'},
             'per_turn': {'base': 5, 'type': 'flat'}
         }
+
+    @property
+    def movement_range(self):
+        """Rango de movimiento calculado desde velocidad"""
+        speed_bonus = max(0, (self.stats.get('speed', 5) - 5) // 2)
+        return self.base_movement + speed_bonus
     
-    def setup_energy_multipliers(self):
-        return {
-            'physical_damage': 1.0,
-            'energy_damage': 1.2,
-            'void_damage': 1.5,
-            'light_damage': 1.3,
-        }
+    def setup_abilities(self):
+        """Configura habilidades con import local para evitar circularidad"""
+        from game.systems.ability_factory import AbilityFactory
+        
+        for ability_key, ability_config in self.abilities_config.items():
+            ability_config_with_key = ability_config.copy()
+            ability_config_with_key['key'] = ability_key
+            ability_instance = AbilityFactory.create_ability(ability_config_with_key)
+            self.actions[ability_key] = ability_instance
+        
+        print(f"🎯 {self.name} - Habilidades: {list(self.actions.keys())}")
     
     def setup_energy_listeners(self):
-        """Listeners para ganar energía"""
+        """Listeners simplificados para ganar energía"""
         def on_deal_damage(data):
             if data.get('attacker') == self:
-                damage_type = data.get('damage_type', 'physical')
-                multiplier = self.energy_stats['energy_gain_multipliers'].get(damage_type, 1.0)
                 base_energy = self.energy_stats['energy_sources']['on_hit']['base']
-                energy_gain = int(base_energy * multiplier)
-                self.gain_energy(energy_gain, f"golpear_{damage_type}")
+                self.gain_energy(base_energy, "golpear")
         
         def on_take_damage(data):
             if data.get('target') == self:
@@ -131,7 +140,7 @@ class BattleEntity(GameEntity):
     def consume_ultimate_energy(self, energy_cost):
         if self.energy_stats['current_energy'] >= energy_cost:
             self.energy_stats['current_energy'] -= energy_cost
-            print(f"💥 {self.name} consumió {energy_cost} de energía!")
+            print(f"🔥 {self.name} consumió {energy_cost} de energía!")
             return True
         return False
     
@@ -148,7 +157,6 @@ class BattleEntity(GameEntity):
         self.pending_post_action_move = False
         self.post_action_move_range = 0
     
-    # 🎯 COMPATIBILIDAD CON CÓDIGO EXISTENTE
     def basic_attack(self, target):
         """Ataque básico usando el sistema de habilidades"""
         if "basic_attack" in self.actions:
