@@ -21,15 +21,15 @@ class BattleScene:
         self.grid = GridSystem()
         self.turn_system = TurnSystem()
         
-        # ✅ ORDEN CORRECTO: effect_system PRIMERO
-        self.effect_system = EffectSystem()
+        # ✅ INICIALIZAR CONTEXTO GLOBAL PRIMERO
+        from game.core.game_context import game_context
+        game_context.initialize()
         
-        # ✅ LUEGO ability_system que depende de effect_system
-        self.ability_system = AbilitySystem(self.grid, self.effect_system)
-        
-        # Los demás sistemas
-        self.passive_system = PassiveSystem()
-        self.movement_system = MovementSystem(self.grid)
+        # ✅ OBTENER SISTEMAS DEL CONTEXTO
+        self.effect_system = game_context.get_system('effect')
+        self.ability_system = game_context.get_system('ability')
+        self.passive_system = game_context.get_system('passive')
+        self.movement_system = game_context.get_system('movement')
         
         self.entities = []
         self.selected_entity = None
@@ -321,7 +321,7 @@ class BattleScene:
                 f"HP: {self.selected_entity.stats['current_hp']}/{self.selected_entity.stats['max_hp']}",
                 f"Energía: {current_energy}/{max_energy}",
                 f"Rango Mov: {getattr(self.selected_entity, 'movement_range', 3)}",
-                f"Estado: {self.current_state.name.upper()}"  # 🆕 Muestra el estado actual
+                f"Estado: {self.current_state.name.upper()}"  # ✅ Muestra el estado actual
             ]
             
             # Barra de energía (se mantiene igual)
@@ -337,7 +337,7 @@ class BattleScene:
             
             energy_text = f"ENERGÍA: {current_energy}/{max_energy}"
             if energy_percentage >= 100:
-                energy_text += " - ULTIMATE LISTA! 💥"
+                energy_text += " - ULTIMATE LISTA! 🪄"
             self.screen.blit(small_font.render(energy_text, True, (255, 255, 255)), (25, 212))
             
             # Ultimate costos (se mantiene igual)
@@ -358,7 +358,7 @@ class BattleScene:
             for i, text in enumerate(info_lines):
                 self.screen.blit(small_font.render(text, True, (255, 255, 255)), (20, 60 + i * 25))
         
-        # 🆕 INSTRUCCIONES DEL ESTADO ACTUAL
+        # ✅ INSTRUCCIONES DEL ESTADO ACTUAL
         instructions = self.current_state.get_instructions()
         for i, instruction in enumerate(instructions):
             self.screen.blit(small_font.render(instruction, True, (150, 200, 255)), 
@@ -375,37 +375,6 @@ class BattleScene:
         self.set_state("targeting")
 
     def create_ability_context(self, caster, target=None, target_position=None, entities=None):
-        """Crea contexto para habilidades incluyendo effect_system - VERSIÓN MEJORADA"""
-        from game.core.action_base import ActionContext
-        
-        # Usar las entidades proporcionadas o las de la escena
-        context_entities = entities if entities is not None else self.entities
-        
-        context = ActionContext(
-            caster=caster,
-            target=target,
-            target_position=target_position,
-            entities=context_entities
-        )
-        
-        # ✅ Asegurar que el context tenga effect_system y battle_scene
-        if not hasattr(context, 'extra_data'):
-            context.extra_data = {}
-        
-        context.extra_data.update({
-            'effect_system': self.effect_system,
-            'battle_scene': self,
-            'turn_system': self.turn_system
-        })
-        
-        logger.debug(
-            "Contexto de habilidad creado", 
-            {
-                "caster": caster.name,
-                "target": target.name if target else "None", 
-                "target_position": target_position,
-                "entities_count": len(context_entities)
-            }
-        )
-        
-        return context
+        """Crea contexto para habilidades usando GameContext"""
+        from game.core.game_context import game_context
+        return game_context.create_ability_context(caster, target, target_position, entities)

@@ -1,10 +1,8 @@
-# game/data/effects.py
 """
-CONFIGURACIÓN DE TODOS LOS EFECTOS - DATA-DRIVEN
+CONFIGURACIÓN DE TODOS LOS EFECTOS - SIN TIPOS DE DAÑO
 """
 
 EFFECTS_CONFIG = {
-    # RED THUNDER
     "kinetic_burn": {
         "id": "kinetic_burn",
         "name": "Quemadura Cinética", 
@@ -15,7 +13,6 @@ EFFECTS_CONFIG = {
                 {
                     "type": "damage",
                     "value": 15,
-                    "damage_type": "kinetic",
                     "calculation": {
                         "formula": "scales_with_source_stat", 
                         "stat": "speed",
@@ -117,7 +114,7 @@ EFFECTS_CONFIG = {
         }
     },
 
-        "hyper_speed": {
+    "hyper_speed": {
         "id": "hyper_speed",
         "name": "Hipervelocidad",
         "type": "buff", 

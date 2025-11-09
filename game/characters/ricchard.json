@@ -30,8 +30,7 @@
       "effects": [
         {
           "type": "damage",
-          "multiplier": 0.4,
-          "damage_type": "energy"
+          "multiplier": 0.4
         },
         {
           "type": "resource_recovery",
@@ -51,7 +50,6 @@
         {
           "type": "chain_movement",
           "multiplier": [0.5, 0.65, 0.9],
-          "damage_type": "physical",
           "movement_pattern": "behind_last"
         }
       ]
@@ -71,8 +69,7 @@
         {
           "type": "damage",
           "multiplier": 1.4,
-          "aoe_radius": 2,
-          "damage_type": "void"
+          "aoe_radius": 2
         }
       ]
     },
@@ -88,7 +85,6 @@
         {
           "type": "damage",
           "multiplier": 2.5,
-          "damage_type": "void",
           "pierce_through": true,
           "aoe_radius": 1,
           "range": "infinite"

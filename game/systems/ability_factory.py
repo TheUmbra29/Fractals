@@ -1,6 +1,7 @@
 """
 Sistema de fábrica de habilidades - VERSIÓN CORREGIDA SIN IMPORTACIONES CIRCULARES
 """
+
 from game.core.action_base import BaseAction, ActionContext
 from game.core.event_system import event_system, EventTypes
 from game.core.logger import logger 
@@ -21,11 +22,10 @@ class EffectComponent:
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
 class DamageEffect(EffectComponent):
-    """Efecto de daño genérico"""
+    """Efecto de daño genérico - SIN TIPOS DE DAÑO"""
     
     def apply(self, context):
         multiplier = self.config.get('multiplier', 1.0)
-        damage_type = self.config.get('damage_type', 'physical')
         aoe_radius = self.config.get('aoe_radius', 0)
         target_filter = self.config.get('target', 'enemies')
         
@@ -49,8 +49,7 @@ class DamageEffect(EffectComponent):
                 'attacker': context.caster,
                 'target': target,
                 'damage': damage,
-                'ability': context.ability_name,
-                'damage_type': damage_type
+                'ability': context.ability_name
             })
             
             logger.combat_event("Habilidad de daño", context.caster, target, damage=damage)
@@ -272,7 +271,6 @@ class ChainMovementEffect(EffectComponent):
                 'target': target,
                 'damage': damage,
                 'ability': context.ability_name,
-                'damage_type': self.config.get('damage_type', 'physical'),
                 'chain_position': i + 1
             })
             
@@ -652,7 +650,7 @@ class UltimateAbility(ComposableAbility):
             })
             
             logger.ability_used(context.caster, self.name, context.target, success=True)
-            logger.info(f"🔥 ULTIMATE USADA: {self.name}!")
+            logger.info(f"🪄 ULTIMATE USADA: {self.name}!")
         
         return success
 

@@ -1,18 +1,23 @@
+"""
+Sistema de habilidades - VERSIÓN REFACTORIZADA
+"""
 import pygame
 from game.core.action_base import ActionContext  
 from game.systems.selection_system import SelectionSystem
 from game.core.logger import logger
 
 class AbilitySystem:
-    def __init__(self, grid_system, effect_system=None):
+    def __init__(self, grid_system, effect_system, game_context=None):
         self.grid_system = grid_system
-        self.effect_system = effect_system  
+        self.effect_system = effect_system
+        self.game_context = game_context  # ✅ NUEVO: Contexto central
         self.selected_ability = None
         self.caster = None
         self.selection_system = SelectionSystem(self)
         logger.debug("AbilitySystem inicializado", {
             "grid_system": type(grid_system).__name__,
-            "effect_system": "provided" if effect_system else "not provided"
+            "effect_system": "provided" if effect_system else "not provided",
+            "game_context": "provided" if game_context else "not provided"
         })
     
     def set_effect_system(self, effect_system):
@@ -55,16 +60,35 @@ class AbilitySystem:
             self.clear_selection()
             return False
     
-    def create_context(self, target_entity=None, target_position=None):
-        return ActionContext(
+    def create_context(self, target_entity=None, target_position=None, entities=None):
+        """Crea contexto MEJORADO - usa GameContext si está disponible"""
+        # ✅ PRIORIDAD: Usar GameContext si está disponible
+        if self.game_context:
+            return self.game_context.create_ability_context(
+                self.caster, target_entity, target_position, entities
+            )
+        
+        # ✅ FALLBACK: Contexto legacy mejorado
+        context = ActionContext(
             caster=self.caster,
             target=target_entity,
             target_position=target_position,
-            entities=[]
+            entities=entities or []
         )
+        
+        # ✅ INYECCIÓN EXPLÍCITA (no más "adivinar")
+        if not hasattr(context, 'extra_data'):
+            context.extra_data = {}
+        
+        context.extra_data.update({
+            'effect_system': self.effect_system,
+            'game_context': self.game_context
+        })
+        
+        return context
     
     def execute_ability_directly(self, context):
-        """Ejecuta habilidad directamente con contexto - VERSIÓN MEJORADA"""
+        """Ejecuta habilidad directamente - VERSIÓN CORREGIDA"""
         if not self.selected_ability or not self.caster:
             logger.warning("Intento de ejecutar habilidad sin selección previa")
             return False
@@ -72,24 +96,18 @@ class AbilitySystem:
         try:
             ability_key = self.selected_ability['key']
             if ability_key in self.caster.actions:
-                # ✅ Asegurar que el contexto tenga effect_system
+                # ✅ ASEGURAR EffectSystem en el contexto (solo si no viene del GameContext)
                 if not hasattr(context, 'extra_data'):
                     context.extra_data = {}
                 
-                # ✅ Usar effect_system de AbilitySystem si está disponible
-                if 'effect_system' not in context.extra_data and self.effect_system:
-                    context.extra_data['effect_system'] = self.effect_system
+                if 'effect_system' not in context.extra_data or context.extra_data['effect_system'] is None:
+                    if self.effect_system:
+                        context.extra_data['effect_system'] = self.effect_system
+                    elif self.game_context:
+                        context.extra_data['effect_system'] = self.game_context.get_system('effect')
                 
                 success = self.caster.perform_action(ability_key, context)
 
-                if not hasattr(context, 'extra_data'):
-                    context.extra_data = {}
-                
-                # ✅ Pasar información adicional si falta
-                if 'effect_system' not in context.extra_data and hasattr(self, 'battle_scene'):
-                    context.extra_data['effect_system'] = self.battle_scene.get_effect_system()
-                
-                success = self.caster.perform_action(ability_key, context)
                 if success:
                     logger.ability_used(
                         self.caster, 

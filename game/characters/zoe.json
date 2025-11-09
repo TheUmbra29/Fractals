@@ -31,8 +31,7 @@
       "effects": [
         {
           "type": "damage",
-          "multiplier": 0.3,
-          "damage_type": "light"
+          "multiplier": 0.3
         },
         {
           "type": "resource_recovery",

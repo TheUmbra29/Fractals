@@ -1,116 +1,103 @@
 {
-  "id": "red_thunder",
-  "name": "Red Thunder",
-  "character_class": "tank",
-  "stats": {
-    "max_hp": 90,
-    "current_hp": 90,
-    "max_ph": 100,
-    "current_ph": 100,
-    "attack": 90,
-    "defense": 30,
-    "speed": 18,
-    "max_energy": 100
-  },
-  "energy_sources": {
-    "on_hit": {"base": 12, "type": "flat"},
-    "on_take_damage": {"base": 6, "type": "flat"},
-    "on_ability_use": {"base": 15, "type": "flat"},
-    "on_kill": {"base": 25, "type": "flat"},
-    "per_turn": {"base": 8, "type": "flat"},
-    "on_storm_ability": {"base": 20, "type": "flat"}
-  },
-  "abilities": {
-    "basic_attack": {
-      "name": "Disparo Relámpago",
-      "cost_ph": 0,
-      "cooldown": 0,
-      "range": "infinite",
-      "selection_mode": "enemy",
-      "effects": [
-        {
-          "type": "damage",
-          "multiplier": 0.2,
-          "damage_type": "energy",
-          "calculation": {
-            "formula": "scales_with_source_stat",
-            "stat": "speed",
-            "multiplier": 1.0
-          }
-        },
-        {
-          "type": "resource_recovery",
-          "ph_recovery": 25
-        }
-      ]
+    "id": "red_thunder",
+    "name": "Red Thunder",
+    "character_class": "damage",
+    "stats": {
+        "max_hp": 90,
+        "current_hp": 90,
+        "max_ph": 100,
+        "current_ph": 100,
+        "attack": 90,
+        "defense": 30,
+        "speed": 18,
+        "max_energy": 100
     },
-    "carrera_relampago": {
-      "name": "Carrera Relámpago",
-      "cost_ph": 40,
-      "cooldown": 2,
-      "range": 10,
-      "selection_mode": "line",
-      "effects": [
-        {
-          "type": "damage",
-          "multiplier": 0.4,
-          "damage_type": "kinetic",
-          "calculation": {
-            "formula": "scales_with_source_stat",
-            "stat": "speed",
-            "multiplier": 1.0
-          }
-        },
-        {
-          "type": "apply_effect",
-          "effect_id": "kinetic_burn",
-          "target": "enemy"
-        }
-      ]
+    "energy_sources": {
+        "on_hit": {"base": 12, "type": "flat"},
+        "on_take_damage": {"base": 6, "type": "flat"},
+        "on_ability_use": {"base": 15, "type": "flat"},
+        "on_kill": {"base": 25, "type": "flat"},
+        "per_turn": {"base": 8, "type": "flat"}
     },
-    "red_thunderblast": {
-      "name": "Red Thunderblast",
-      "cost_ph": 60,
-      "cooldown": 3,
-      "range": 2,
-      "selection_mode": "aoe",
-      "effects": [
-        {
-          "type": "damage",
-          "multiplier": 0.7,
-          "damage_type": "kinetic",
-          "calculation": {
-            "formula": "scales_with_source_stat",
-            "stat": "speed",
-            "multiplier": 1.0
-          }
+    "abilities": {
+        "basic_attack": {
+            "name": "Disparo Relámpago",
+            "cost_ph": 0,
+            "range": 999,
+            "selection_mode": "enemy",
+            "effects": [
+                {
+                    "type": "damage",
+                    "multiplier": 0.2,
+                    "damage_type": "physical"
+                }
+            ]
         },
-        {
-          "type": "apply_effect",
-          "effect_id": "overload",
-          "target": "self"
-        }
-      ]
-    },
-    "red_storm": {
-      "name": "Tormenta Rojiza",
-      "cost_ph": 0,
-      "energy_cost": 100,
-      "cooldown": 4,
-      "is_ultimate": true,
-      "selection_mode": "none",
-      "effects": [
-        {
-          "type": "apply_effect",
-          "effect_id": "hyper_speed",
-          "target": "self"
+        "carrera_relampago": {
+            "name": "Carrera Relámpago",
+            "cost_ph": 40,
+            "cooldown": 2,
+            "range": 10,
+            "selection_mode": "line",
+            "effects": [
+                {
+                    "type": "damage",
+                    "multiplier": 0.4,
+                    "target": "enemies"
+                },
+                {
+                    "type": "apply_effect",
+                    "effect_id": "kinetic_burn",
+                    "target": "enemies"
+                }
+            ]
         },
-        {
-          "type": "apply_effect",
-          "effect_id": "improved_dash",
-          "target": "self"
+        "red_thunderblast": {
+            "name": "Red Thunderblast",
+            "cost_ph": 60,
+            "cooldown": 3,
+            "range": 2,
+            "selection_mode": "aoe",
+            "aoe_radius": 2,
+            "effects": [
+                {
+                    "type": "damage",
+                    "multiplier": 0.7,
+                    "target": "enemies",
+                    "aoe_radius": 2
+                },
+                {
+                    "type": "apply_effect",
+                    "effect_id": "overload",
+                    "target": "self"
+                }
+            ]
+        },
+        "red_storm": {
+            "name": "Tormenta Rojiza",
+            "cost_ph": 0,
+            "energy_cost": 100,
+            "cooldown": 4,
+            "range": 1,
+            "selection_mode": "none",
+            "is_ultimate": true,
+            "effects": [
+                {
+                    "type": "apply_effect",
+                    "effect_id": "hyper_speed",
+                    "target": "self"
+                },
+                {
+                    "type": "apply_effect",
+                    "effect_id": "improved_dash",
+                    "target": "self"
+                },
+                {
+                    "type": "ultimate_recharge",
+                    "target": "self",
+                    "value": 100
+                }
+            ]
         }
-      ]
     }
-  }
 }

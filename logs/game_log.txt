@@ -143,3 +143,327 @@
 [2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
 [2025-11-08 14:56:22] [WARNING] No se pudo encontrar EffectSystem en el contexto
 [2025-11-08 14:56:22] [WARNING] Energía insuficiente: 0/120
+[2025-11-08 18:13:34] [COMBAT] ⚔️ [18:13:34] COMBAT: Habilidad de daño | Atacante: Ricchard | Objetivo: Enemigo | Daño: 39
+[2025-11-08 18:13:34] [ABILITY] ✅ [18:13:34] ABILITY: Ricchard -> AMP -> Enemigo
+[2025-11-08 18:13:34] [DEBUG] Iniciando movimiento en cadena con 3 objetivos
+[2025-11-08 18:13:34] [COMBAT] ⚔️ [18:13:34] COMBAT: Ataque en cadena #1 | Atacante: Ricchard | Objetivo: Enemigo1 | Daño: 49
+[2025-11-08 18:13:34] [COMBAT] ⚔️ [18:13:34] COMBAT: Ataque en cadena #2 | Atacante: Ricchard | Objetivo: Enemigo2 | Daño: 63
+[2025-11-08 18:13:34] [COMBAT] ⚔️ [18:13:34] COMBAT: Ataque en cadena #3 | Atacante: Ricchard | Objetivo: Enemigo3 | Daño: 88
+[2025-11-08 18:13:34] [DEBUG] Ricchard se desplaza: (0, 0) → (4, 0)
+[2025-11-08 18:13:34] [INFO] Cadena completada: 200 daño total
+[2025-11-08 18:13:34] [ABILITY] ✅ [18:13:34] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 18:13:34] [DEBUG] Ricchard se teletransportó: (0, 0) → (3, 3)
+[2025-11-08 18:13:34] [ABILITY] ✅ [18:13:34] ABILITY: Ricchard -> Destello Vácuo
+[2025-11-08 18:13:34] [WARNING] Energía insuficiente: 0/120
+[2025-11-08 18:13:34] [COMBAT] ⚔️ [18:13:34] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Enemigo | Daño: 17
+[2025-11-08 18:13:34] [ABILITY] ✅ [18:13:34] ABILITY: Red Thunder -> Disparo Relámpago -> Enemigo
+[2025-11-08 18:13:34] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 18:13:34] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 18:13:34] [COMBAT] ⚔️ [18:13:34] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Enemigo1 | Daño: 61
+[2025-11-08 18:13:34] [COMBAT] ⚔️ [18:13:34] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Enemigo2 | Daño: 61
+[2025-11-08 18:13:34] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 18:13:34] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 18:13:34] [ABILITY] ✅ [18:13:34] ABILITY: Red Thunder -> Red Thunderblast
+[2025-11-08 18:13:34] [WARNING] Energía insuficiente: 0/100
+[2025-11-08 18:13:34] [COMBAT] ⚔️ [18:13:34] COMBAT: Habilidad de daño | Atacante: Zoe | Objetivo: Enemigo | Daño: 23
+[2025-11-08 18:13:34] [ABILITY] ✅ [18:13:34] ABILITY: Zoe -> Toque de Luz -> Enemigo
+[2025-11-08 18:13:34] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 18:13:34] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 18:13:34] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 18:13:34] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 18:13:34] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 18:13:34] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 18:13:34] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 18:13:34] [WARNING] Energía insuficiente: 0/120
+[2025-11-08 18:17:23] [DEBUG] EffectSystem inicializado
+[2025-11-08 18:17:23] [DEBUG] AbilitySystem inicializado
+[2025-11-08 18:17:23] [INFO] BattleScene inicializando
+[2025-11-08 18:17:23] [INFO] EffectSystem cargó 8 efectos
+[2025-11-08 18:17:23] [DEBUG] Sistema de efectos cargado
+[2025-11-08 18:17:23] [INFO] Escenario configurado
+[2025-11-08 18:17:23] [INFO] Escenario de batalla configurado y listo
+[2025-11-08 18:17:26] [STATE] 🔄 [18:17:26] STATE: IdleState → movement | Entidad: Ricchard
+[2025-11-08 18:17:30] [STATE] 🔄 [18:17:30] STATE: MovementState → idle | Entidad: Ricchard
+[2025-11-08 18:17:31] [STATE] 🔄 [18:17:31] STATE: IdleState → movement | Entidad: Ricchard
+[2025-11-08 18:17:31] [STATE] 🔄 [18:17:31] STATE: MovementState → idle | Entidad: Ricchard
+[2025-11-08 18:17:33] [DEBUG] Menú de habilidades abierto
+[2025-11-08 18:17:36] [INFO] Ricchard prepara Corte Fugaz
+[2025-11-08 18:17:36] [DEBUG] Contexto de habilidad creado
+[2025-11-08 18:17:36] [INFO] Modo chain activado para Corte Fugaz
+[2025-11-08 18:17:36] [STATE] 🔄 [18:17:36] STATE: IdleState → ability | Entidad: Ricchard
+[2025-11-08 18:17:40] [DEBUG] Iniciando movimiento en cadena con 2 objetivos
+[2025-11-08 18:17:40] [COMBAT] ⚔️ [18:17:40] COMBAT: Ataque en cadena #1 | Atacante: Ricchard | Objetivo: Goblin | Daño: 49
+[2025-11-08 18:17:40] [COMBAT] ⚔️ [18:17:40] COMBAT: Ataque en cadena #2 | Atacante: Ricchard | Objetivo: Orco | Daño: 63
+[2025-11-08 18:17:40] [DEBUG] Ricchard se desplaza: (8, 5) → (6, 2)
+[2025-11-08 18:17:40] [INFO] Cadena completada: 112 daño total
+[2025-11-08 18:17:40] [ABILITY] ✅ [18:17:40] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 18:17:40] [DEBUG] Iniciando movimiento en cadena con 2 objetivos
+[2025-11-08 18:17:40] [COMBAT] ⚔️ [18:17:40] COMBAT: Ataque en cadena #1 | Atacante: Ricchard | Objetivo: Goblin | Daño: 49
+[2025-11-08 18:17:40] [COMBAT] ⚔️ [18:17:40] COMBAT: Ataque en cadena #2 | Atacante: Ricchard | Objetivo: Orco | Daño: 63
+[2025-11-08 18:17:40] [DEBUG] Ricchard se desplaza: (6, 2) → (8, 4)
+[2025-11-08 18:17:40] [INFO] Cadena completada: 112 daño total
+[2025-11-08 18:17:40] [ABILITY] ✅ [18:17:40] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 18:17:40] [ABILITY] ✅ [18:17:40] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 18:17:40] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 18:17:40] [STATE] 🔄 [18:17:40] STATE: AbilityState → idle | Entidad: Ricchard
+[2025-11-08 18:19:15] [DEBUG] EffectSystem inicializado
+[2025-11-08 18:19:15] [DEBUG] AbilitySystem inicializado
+[2025-11-08 18:19:15] [INFO] BattleScene inicializando
+[2025-11-08 18:19:15] [INFO] EffectSystem cargó 8 efectos
+[2025-11-08 18:19:15] [DEBUG] Sistema de efectos cargado
+[2025-11-08 18:19:15] [INFO] Escenario configurado
+[2025-11-08 18:19:15] [INFO] Escenario de batalla configurado y listo
+[2025-11-08 18:19:17] [DEBUG] Menú de habilidades abierto
+[2025-11-08 18:19:19] [INFO] Ricchard prepara Destello Vácuo
+[2025-11-08 18:19:19] [DEBUG] Contexto de habilidad creado
+[2025-11-08 18:19:19] [INFO] Modo position activado para Destello Vácuo
+[2025-11-08 18:19:19] [STATE] 🔄 [18:19:19] STATE: IdleState → ability | Entidad: Ricchard
+[2025-11-08 18:19:21] [DEBUG] Ricchard se teletransportó: (2, 2) → (6, 4)
+[2025-11-08 18:19:21] [ABILITY] ✅ [18:19:21] ABILITY: Ricchard -> Destello Vácuo
+[2025-11-08 18:19:21] [DEBUG] Ricchard se teletransportó: (6, 4) → (6, 4)
+[2025-11-08 18:19:21] [ABILITY] ✅ [18:19:21] ABILITY: Ricchard -> Destello Vácuo
+[2025-11-08 18:19:21] [ABILITY] ✅ [18:19:21] ABILITY: Ricchard -> Destello Vácuo
+[2025-11-08 18:19:21] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 18:19:21] [STATE] 🔄 [18:19:21] STATE: AbilityState → idle | Entidad: Ricchard
+[2025-11-08 18:19:23] [DEBUG] Menú de habilidades abierto
+[2025-11-08 18:19:24] [INFO] Red Thunder prepara Carrera Relámpago
+[2025-11-08 18:19:24] [DEBUG] Contexto de habilidad creado
+[2025-11-08 18:19:24] [INFO] Modo line activado para Carrera Relámpago
+[2025-11-08 18:19:24] [STATE] 🔄 [18:19:24] STATE: IdleState → ability | Entidad: Red Thunder
+[2025-11-08 18:19:25] [INFO] Red Thunder recibe Quemadura Cinética
+[2025-11-08 18:19:25] [DEBUG] ✨ kinetic_burn aplicado a Red Thunder
+[2025-11-08 18:19:25] [INFO] ApplyEffect: 1/1 objetivos afectados por kinetic_burn
+[2025-11-08 18:19:25] [ABILITY] ✅ [18:19:25] ABILITY: Red Thunder -> Carrera Relámpago
+[2025-11-08 18:19:25] [INFO] 📚 Quemadura Cinética stackeado a 2 en Red Thunder
+[2025-11-08 18:19:25] [DEBUG] ✨ kinetic_burn aplicado a Red Thunder
+[2025-11-08 18:19:25] [INFO] ApplyEffect: 1/1 objetivos afectados por kinetic_burn
+[2025-11-08 18:19:25] [ABILITY] ✅ [18:19:25] ABILITY: Red Thunder -> Carrera Relámpago
+[2025-11-08 18:19:25] [ABILITY] ✅ [18:19:25] ABILITY: Red Thunder -> Carrera Relámpago
+[2025-11-08 18:19:25] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 18:19:25] [STATE] 🔄 [18:19:25] STATE: AbilityState → idle | Entidad: Red Thunder
+[2025-11-08 18:20:17] [INFO] Terminando turno...
+[2025-11-08 18:20:17] [STATE] 🔄 [18:20:17] STATE: IdleState → idle | Entidad: Red Thunder
+[2025-11-08 18:20:17] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 18:20:17] [STATE] 🔄 [18:20:17] STATE: IdleState → idle
+[2025-11-08 18:20:17] [DEBUG] Selecciones limpiadas
+[2025-11-08 18:20:17] [INFO] Iniciando turno del enemigo...
+[2025-11-08 18:20:17] [DEBUG] Timer de turno enemigo configurado
+[2025-11-08 18:20:18] [INFO] Terminando turno...
+[2025-11-08 18:20:18] [STATE] 🔄 [18:20:18] STATE: IdleState → idle
+[2025-11-08 18:20:18] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 18:20:18] [STATE] 🔄 [18:20:18] STATE: IdleState → idle
+[2025-11-08 18:20:18] [DEBUG] Selecciones limpiadas
+[2025-11-08 18:20:20] [DEBUG] Menú de habilidades abierto
+[2025-11-08 18:20:24] [INFO] Red Thunder prepara Red Thunderblast
+[2025-11-08 18:20:24] [DEBUG] Contexto de habilidad creado
+[2025-11-08 18:20:24] [WARNING] PH insuficiente para Red Thunderblast
+[2025-11-08 18:20:31] [DEBUG] EffectSystem inicializado
+[2025-11-08 18:20:31] [DEBUG] AbilitySystem inicializado
+[2025-11-08 18:20:31] [INFO] BattleScene inicializando
+[2025-11-08 18:20:31] [INFO] EffectSystem cargó 8 efectos
+[2025-11-08 18:20:31] [DEBUG] Sistema de efectos cargado
+[2025-11-08 18:20:31] [INFO] Escenario configurado
+[2025-11-08 18:20:31] [INFO] Escenario de batalla configurado y listo
+[2025-11-08 18:20:33] [DEBUG] Menú de habilidades abierto
+[2025-11-08 18:20:34] [INFO] Red Thunder prepara Red Thunderblast
+[2025-11-08 18:20:34] [DEBUG] Contexto de habilidad creado
+[2025-11-08 18:20:34] [INFO] Red Thunder recibe Sobrecarga Cinética
+[2025-11-08 18:20:34] [DEBUG] Red Thunder speed: 18 → 28
+[2025-11-08 18:20:34] [DEBUG] ✨ overload aplicado a Red Thunder
+[2025-11-08 18:20:34] [INFO] ApplyEffect: 1/1 objetivos afectados por overload
+[2025-11-08 18:20:34] [ABILITY] ✅ [18:20:34] ABILITY: Red Thunder -> Red Thunderblast
+[2025-11-08 18:20:34] [INFO] 📚 Sobrecarga Cinética stackeado a 2 en Red Thunder
+[2025-11-08 18:20:34] [DEBUG] ✨ overload aplicado a Red Thunder
+[2025-11-08 18:20:34] [INFO] ApplyEffect: 1/1 objetivos afectados por overload
+[2025-11-08 18:20:34] [ABILITY] ✅ [18:20:34] ABILITY: Red Thunder -> Red Thunderblast
+[2025-11-08 18:20:34] [ABILITY] ✅ [18:20:34] ABILITY: Red Thunder -> Red Thunderblast
+[2025-11-08 18:20:34] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 18:20:34] [INFO] Modo aoe activado para Red Thunderblast
+[2025-11-08 18:20:34] [STATE] 🔄 [18:20:34] STATE: IdleState → ability | Entidad: Red Thunder
+[2025-11-08 18:21:49] [DEBUG] EffectSystem inicializado
+[2025-11-08 18:21:49] [DEBUG] AbilitySystem inicializado
+[2025-11-08 18:21:49] [INFO] BattleScene inicializando
+[2025-11-08 18:21:49] [INFO] EffectSystem cargó 8 efectos
+[2025-11-08 18:21:49] [DEBUG] Sistema de efectos cargado
+[2025-11-08 18:21:49] [INFO] Escenario configurado
+[2025-11-08 18:21:49] [INFO] Escenario de batalla configurado y listo
+[2025-11-08 18:21:51] [DEBUG] Menú de habilidades abierto
+[2025-11-08 18:21:52] [INFO] Zoe prepara Torbellino de Fe
+[2025-11-08 18:21:52] [DEBUG] Contexto de habilidad creado
+[2025-11-08 18:21:52] [INFO] Modo position activado para Torbellino de Fe
+[2025-11-08 18:21:52] [STATE] 🔄 [18:21:52] STATE: IdleState → ability | Entidad: Zoe
+[2025-11-08 18:21:54] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 18:21:54] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 18:21:54] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 18:21:54] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 18:21:54] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 18:21:54] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 18:21:54] [ABILITY] ❌ [18:21:54] ABILITY: Zoe -> Torbellino de Fe
+[2025-11-08 18:21:54] [WARNING] Habilidad Torbellino de Fe falló al ejecutarse
+[2025-11-08 18:21:57] [STATE] 🔄 [18:21:57] STATE: AbilityState → idle | Entidad: Zoe
+[2025-11-08 18:22:00] [DEBUG] Menú de habilidades abierto
+[2025-11-08 18:22:01] [INFO] Zoe prepara Grito de Tempestad
+[2025-11-08 18:22:01] [DEBUG] Contexto de habilidad creado
+[2025-11-08 18:22:01] [INFO] Modo global_ally activado para Grito de Tempestad
+[2025-11-08 18:22:01] [STATE] 🔄 [18:22:01] STATE: IdleState → ability | Entidad: Zoe
+[2025-11-08 18:22:03] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 18:22:03] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 18:22:03] [ABILITY] ❌ [18:22:03] ABILITY: Zoe -> Grito de Tempestad -> Ricchard
+[2025-11-08 18:22:03] [WARNING] Habilidad Grito de Tempestad falló al ejecutarse
+[2025-11-08 18:32:54] [COMBAT] ⚔️ [18:32:54] COMBAT: Habilidad de daño | Atacante: Ricchard | Objetivo: Enemigo | Daño: 39
+[2025-11-08 18:32:54] [ABILITY] ✅ [18:32:54] ABILITY: Ricchard -> AMP -> Enemigo
+[2025-11-08 18:32:54] [DEBUG] Iniciando movimiento en cadena con 3 objetivos
+[2025-11-08 18:32:54] [COMBAT] ⚔️ [18:32:54] COMBAT: Ataque en cadena #1 | Atacante: Ricchard | Objetivo: Enemigo1 | Daño: 49
+[2025-11-08 18:32:54] [COMBAT] ⚔️ [18:32:54] COMBAT: Ataque en cadena #2 | Atacante: Ricchard | Objetivo: Enemigo2 | Daño: 63
+[2025-11-08 18:32:54] [COMBAT] ⚔️ [18:32:54] COMBAT: Ataque en cadena #3 | Atacante: Ricchard | Objetivo: Enemigo3 | Daño: 88
+[2025-11-08 18:32:54] [DEBUG] Ricchard se desplaza: (0, 0) → (4, 0)
+[2025-11-08 18:32:54] [INFO] Cadena completada: 200 daño total
+[2025-11-08 18:32:54] [ABILITY] ✅ [18:32:54] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 18:32:54] [DEBUG] Ricchard se teletransportó: (0, 0) → (3, 3)
+[2025-11-08 18:32:54] [ABILITY] ✅ [18:32:54] ABILITY: Ricchard -> Destello Vácuo
+[2025-11-08 18:32:54] [WARNING] Energía insuficiente: 0/120
+[2025-11-08 18:32:54] [COMBAT] ⚔️ [18:32:54] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Enemigo | Daño: 17
+[2025-11-08 18:32:54] [ABILITY] ✅ [18:32:54] ABILITY: Red Thunder -> Disparo Relámpago -> Enemigo
+[2025-11-08 18:32:54] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 18:32:54] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 18:32:54] [COMBAT] ⚔️ [18:32:54] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Enemigo1 | Daño: 61
+[2025-11-08 18:32:54] [COMBAT] ⚔️ [18:32:54] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Enemigo2 | Daño: 61
+[2025-11-08 18:32:54] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 18:32:54] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 18:32:54] [ABILITY] ✅ [18:32:54] ABILITY: Red Thunder -> Red Thunderblast
+[2025-11-08 18:32:54] [WARNING] Energía insuficiente: 0/100
+[2025-11-08 18:32:54] [COMBAT] ⚔️ [18:32:54] COMBAT: Habilidad de daño | Atacante: Zoe | Objetivo: Enemigo | Daño: 23
+[2025-11-08 18:32:54] [ABILITY] ✅ [18:32:54] ABILITY: Zoe -> Toque de Luz -> Enemigo
+[2025-11-08 18:32:54] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 18:32:54] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 18:32:54] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 18:32:54] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 18:32:54] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 18:32:54] [WARNING] No se pudo encontrar EffectSystem mediante ningún método
+[2025-11-08 18:32:54] [WARNING] No se pudo encontrar EffectSystem en el contexto
+[2025-11-08 18:32:54] [WARNING] Energía insuficiente: 0/120
+[2025-11-08 18:33:50] [DEBUG] EffectSystem inicializado
+[2025-11-08 18:33:50] [DEBUG] AbilitySystem inicializado
+[2025-11-08 18:33:50] [INFO] BattleScene inicializando
+[2025-11-08 18:33:50] [INFO] EffectSystem cargó 8 efectos
+[2025-11-08 18:33:50] [DEBUG] Sistema de efectos cargado
+[2025-11-08 18:33:50] [INFO] Escenario configurado
+[2025-11-08 18:33:50] [INFO] Escenario de batalla configurado y listo
+[2025-11-08 18:33:54] [STATE] 🔄 [18:33:54] STATE: IdleState → movement | Entidad: Ricchard
+[2025-11-08 18:33:56] [STATE] 🔄 [18:33:56] STATE: MovementState → idle | Entidad: Ricchard
+[2025-11-08 18:33:57] [DEBUG] Menú de habilidades abierto
+[2025-11-08 18:34:00] [INFO] Ricchard prepara Corte Fugaz
+[2025-11-08 18:34:00] [DEBUG] Contexto de habilidad creado
+[2025-11-08 18:34:00] [INFO] Modo chain activado para Corte Fugaz
+[2025-11-08 18:34:00] [STATE] 🔄 [18:34:00] STATE: IdleState → ability | Entidad: Ricchard
+[2025-11-08 18:34:02] [DEBUG] Iniciando movimiento en cadena con 2 objetivos
+[2025-11-08 18:34:02] [COMBAT] ⚔️ [18:34:02] COMBAT: Ataque en cadena #1 | Atacante: Ricchard | Objetivo: Goblin | Daño: 49
+[2025-11-08 18:34:02] [COMBAT] ⚔️ [18:34:02] COMBAT: Ataque en cadena #2 | Atacante: Ricchard | Objetivo: Orco | Daño: 63
+[2025-11-08 18:34:02] [DEBUG] Ricchard se desplaza: (6, 4) → (8, 2)
+[2025-11-08 18:34:02] [INFO] Cadena completada: 112 daño total
+[2025-11-08 18:34:02] [ABILITY] ✅ [18:34:02] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 18:34:02] [ABILITY] ✅ [18:34:02] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 18:34:02] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 18:34:02] [STATE] 🔄 [18:34:02] STATE: AbilityState → idle | Entidad: Ricchard
+[2025-11-08 20:32:42] [DEBUG] GameContext creado
+[2025-11-08 20:32:42] [INFO] 🔄 Inicializando GameContext...
+[2025-11-08 20:32:42] [DEBUG] 📋 Sistema registrado: grid
+[2025-11-08 20:32:42] [DEBUG] 📋 Sistema registrado: turn
+[2025-11-08 20:32:42] [DEBUG] 📋 Sistema registrado: movement
+[2025-11-08 20:32:42] [DEBUG] EffectSystem inicializado
+[2025-11-08 20:32:42] [DEBUG] 📋 Sistema registrado: effect
+[2025-11-08 20:32:42] [DEBUG] 📋 Sistema registrado: passive
+[2025-11-08 20:32:42] [DEBUG] AbilitySystem inicializado
+[2025-11-08 20:32:42] [DEBUG] 📋 Sistema registrado: ability
+[2025-11-08 20:32:42] [INFO] EffectSystem cargó 8 efectos
+[2025-11-08 20:32:42] [INFO] ✅ GameContext inicializado completamente
+[2025-11-08 20:32:42] [INFO] BattleScene inicializando
+[2025-11-08 20:32:42] [INFO] EffectSystem cargó 8 efectos
+[2025-11-08 20:32:43] [DEBUG] Sistema de efectos cargado
+[2025-11-08 20:32:43] [INFO] Escenario configurado
+[2025-11-08 20:32:43] [INFO] Escenario de batalla configurado y listo
+[2025-11-08 20:32:44] [STATE] 🔄 [20:32:44] STATE: IdleState → movement | Entidad: Ricchard
+[2025-11-08 20:32:46] [STATE] 🔄 [20:32:46] STATE: MovementState → idle | Entidad: Ricchard
+[2025-11-08 20:32:47] [DEBUG] Menú de habilidades abierto
+[2025-11-08 20:32:49] [INFO] Ricchard prepara Corte Fugaz
+[2025-11-08 20:32:49] [INFO] Modo chain activado para Corte Fugaz
+[2025-11-08 20:32:49] [STATE] 🔄 [20:32:49] STATE: IdleState → ability | Entidad: Ricchard
+[2025-11-08 20:32:52] [DEBUG] Iniciando movimiento en cadena con 2 objetivos
+[2025-11-08 20:32:52] [COMBAT] ⚔️ [20:32:52] COMBAT: Ataque en cadena #1 | Atacante: Ricchard | Objetivo: Goblin | Daño: 49
+[2025-11-08 20:32:52] [COMBAT] ⚔️ [20:32:52] COMBAT: Ataque en cadena #2 | Atacante: Ricchard | Objetivo: Orco | Daño: 63
+[2025-11-08 20:32:52] [DEBUG] Ricchard se desplaza: (6, 4) → (8, 2)
+[2025-11-08 20:32:52] [INFO] Cadena completada: 112 daño total
+[2025-11-08 20:32:52] [ABILITY] ✅ [20:32:52] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 20:32:52] [ABILITY] ✅ [20:32:52] ABILITY: Ricchard -> Corte Fugaz
+[2025-11-08 20:32:52] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 20:32:52] [STATE] 🔄 [20:32:52] STATE: AbilityState → idle | Entidad: Ricchard
+[2025-11-08 20:32:53] [DEBUG] Menú de habilidades abierto
+[2025-11-08 20:32:55] [INFO] Zoe prepara Torbellino de Fe
+[2025-11-08 20:32:55] [INFO] Modo position activado para Torbellino de Fe
+[2025-11-08 20:32:55] [STATE] 🔄 [20:32:55] STATE: IdleState → ability | Entidad: Zoe
+[2025-11-08 20:32:56] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 20:32:56] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 20:32:56] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 20:32:56] [ABILITY] ❌ [20:32:56] ABILITY: Zoe -> Torbellino de Fe
+[2025-11-08 20:32:56] [WARNING] Habilidad Torbellino de Fe falló al ejecutarse
+[2025-11-08 20:32:57] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 20:32:57] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 20:32:57] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 20:32:57] [ABILITY] ❌ [20:32:57] ABILITY: Zoe -> Torbellino de Fe
+[2025-11-08 20:32:57] [WARNING] Habilidad Torbellino de Fe falló al ejecutarse
+[2025-11-08 20:32:58] [DEBUG] Zoe curó 0 HP a 0 objetivos
+[2025-11-08 20:32:58] [WARNING] No se encontraron objetivos para speed_buff (tipo: allies)
+[2025-11-08 20:32:58] [WARNING] No se encontraron objetivos para speed_debuff (tipo: enemies)
+[2025-11-08 20:32:58] [ABILITY] ❌ [20:32:58] ABILITY: Zoe -> Torbellino de Fe
+[2025-11-08 20:32:58] [WARNING] Habilidad Torbellino de Fe falló al ejecutarse
+[2025-11-08 20:33:01] [STATE] 🔄 [20:33:01] STATE: AbilityState → idle | Entidad: Zoe
+[2025-11-08 20:33:03] [DEBUG] Menú de habilidades abierto
+[2025-11-08 20:33:05] [INFO] Zoe prepara Grito de Tempestad
+[2025-11-08 20:33:05] [INFO] Modo global_ally activado para Grito de Tempestad
+[2025-11-08 20:33:05] [STATE] 🔄 [20:33:05] STATE: IdleState → ability | Entidad: Zoe
+[2025-11-08 20:33:07] [WARNING] No se encontraron objetivos para comradeship (tipo: selected)
+[2025-11-08 20:33:07] [ABILITY] ❌ [20:33:07] ABILITY: Zoe -> Grito de Tempestad -> Red Thunder
+[2025-11-08 20:33:07] [WARNING] Habilidad Grito de Tempestad falló al ejecutarse
+[2025-11-08 20:33:08] [STATE] 🔄 [20:33:08] STATE: AbilityState → idle | Entidad: Zoe
+[2025-11-08 20:33:10] [STATE] 🔄 [20:33:10] STATE: IdleState → movement | Entidad: Red Thunder
+[2025-11-08 20:33:12] [STATE] 🔄 [20:33:12] STATE: MovementState → idle | Entidad: Red Thunder
+[2025-11-08 20:33:13] [DEBUG] Menú de habilidades abierto
+[2025-11-08 20:33:14] [INFO] Red Thunder prepara Carrera Relámpago
+[2025-11-08 20:33:14] [INFO] Modo line activado para Carrera Relámpago
+[2025-11-08 20:33:14] [STATE] 🔄 [20:33:14] STATE: IdleState → ability | Entidad: Red Thunder
+[2025-11-08 20:33:15] [COMBAT] ⚔️ [20:33:15] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Goblin | Daño: 35
+[2025-11-08 20:33:15] [COMBAT] ⚔️ [20:33:15] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Orco | Daño: 35
+[2025-11-08 20:33:15] [INFO] Goblin recibe Quemadura Cinética
+[2025-11-08 20:33:15] [DEBUG] ✨ kinetic_burn aplicado a Goblin
+[2025-11-08 20:33:15] [INFO] Orco recibe Quemadura Cinética
+[2025-11-08 20:33:15] [DEBUG] ✨ kinetic_burn aplicado a Orco
+[2025-11-08 20:33:15] [INFO] ApplyEffect: 2/2 objetivos afectados por kinetic_burn
+[2025-11-08 20:33:15] [ABILITY] ✅ [20:33:15] ABILITY: Red Thunder -> Carrera Relámpago
+[2025-11-08 20:33:15] [ABILITY] ✅ [20:33:15] ABILITY: Red Thunder -> Carrera Relámpago
+[2025-11-08 20:33:15] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 20:33:15] [STATE] 🔄 [20:33:15] STATE: AbilityState → idle | Entidad: Red Thunder
+[2025-11-08 20:33:18] [INFO] Terminando turno...
+[2025-11-08 20:33:18] [STATE] 🔄 [20:33:18] STATE: IdleState → idle | Entidad: Red Thunder
+[2025-11-08 20:33:18] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 20:33:18] [STATE] 🔄 [20:33:18] STATE: IdleState → idle
+[2025-11-08 20:33:18] [DEBUG] Selecciones limpiadas
+[2025-11-08 20:33:18] [INFO] Iniciando turno del enemigo...
+[2025-11-08 20:33:18] [DEBUG] Timer de turno enemigo configurado
+[2025-11-08 20:33:18] [INFO] Terminando turno...
+[2025-11-08 20:33:18] [STATE] 🔄 [20:33:18] STATE: IdleState → idle
+[2025-11-08 20:33:18] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 20:33:18] [STATE] 🔄 [20:33:18] STATE: IdleState → idle
+[2025-11-08 20:33:18] [DEBUG] Selecciones limpiadas
+[2025-11-08 20:33:20] [DEBUG] Menú de habilidades abierto
+[2025-11-08 20:33:22] [INFO] Red Thunder prepara Red Thunderblast
+[2025-11-08 20:33:22] [COMBAT] ⚔️ [20:33:22] COMBAT: Habilidad de daño | Atacante: Red Thunder | Objetivo: Goblin | Daño: 61
+[2025-11-08 20:33:22] [INFO] Red Thunder recibe Sobrecarga Cinética
+[2025-11-08 20:33:22] [DEBUG] Red Thunder speed: 18 → 28
+[2025-11-08 20:33:22] [DEBUG] ✨ overload aplicado a Red Thunder
+[2025-11-08 20:33:22] [INFO] ApplyEffect: 1/1 objetivos afectados por overload
+[2025-11-08 20:33:22] [ABILITY] ✅ [20:33:22] ABILITY: Red Thunder -> Red Thunderblast
+[2025-11-08 20:33:22] [ABILITY] ✅ [20:33:22] ABILITY: Red Thunder -> Red Thunderblast
+[2025-11-08 20:33:22] [DEBUG] Selección de habilidad limpiada
+[2025-11-08 20:33:22] [INFO] Modo aoe activado para Red Thunderblast
+[2025-11-08 20:33:22] [STATE] 🔄 [20:33:22] STATE: IdleState → ability | Entidad: Red Thunder
+[2025-11-08 20:33:25] [STATE] 🔄 [20:33:25] STATE: AbilityState → idle | Entidad: Red Thunder

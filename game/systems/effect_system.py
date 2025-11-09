@@ -70,9 +70,8 @@ class GenericEffect:
             self._action_custom(action, target, extra_data)
     
     def _action_damage(self, action, target):
-        """Acción: aplicar daño"""
+        """Acción: aplicar daño SIMPLIFICADO - sin tipos de daño"""
         base_damage = action.get('value', 0)
-        damage_type = action.get('damage_type', 'physical')
         
         # Calcular daño final
         damage = self._calculate_value(base_damage, action.get('calculation'), target)
@@ -87,7 +86,6 @@ class GenericEffect:
                 'attacker': self.source,
                 'target': target,
                 'damage': damage,
-                'damage_type': damage_type,
                 'source_effect': self.name
             })
     
@@ -183,7 +181,7 @@ class GenericEffect:
         if hasattr(target, 'pending_post_action_move'):
             target.pending_post_action_move = True
             target.post_action_move_range = 3
-            logger.info(f"🛵 {target.name} obtiene embestida mejorada!")
+            logger.info(f"⚡ {target.name} obtiene embestida mejorada!")
             return True
         return False
     
@@ -191,7 +189,7 @@ class GenericEffect:
         """Verifica la existencia de energy_stats dinámicamente"""
         if hasattr(target, 'energy_stats'):
             target.energy_stats['current_energy'] = target.energy_stats['max_energy']
-            logger.info(f"⚡ {target.name} recarga energía ultimate al máximo!")
+            logger.info(f"✨ {target.name} recarga energía ultimate al máximo!")
             return True
         return False
     
@@ -200,7 +198,7 @@ class GenericEffect:
         if hasattr(target, 'stats') and 'speed' in target.stats:
             original_speed = target.stats.get('speed', 10)
             target.stats['speed'] = original_speed + 50
-            logger.info(f"🎯 {target.name} obtiene hipervelocidad! (+50 velocidad)")
+            logger.info(f"🌀 {target.name} obtiene hipervelocidad! (+50 velocidad)")
             return True
         return False
     
@@ -244,7 +242,8 @@ class GenericEffect:
 class EffectSystem:
     """Sistema para manejar efectos persistentes - VERSIÓN MEJORADA"""
     
-    def __init__(self):
+    def __init__(self, game_context=None):
+        self.game_context = game_context
         self.entity_effects: Dict[str, List[GenericEffect]] = {}
         self.effects_registry = {}
         logger.debug("EffectSystem inicializado")
@@ -300,7 +299,7 @@ class EffectSystem:
                 if effect.is_expired():
                     effect.on_remove(entity)
                     effects_to_remove.append((entity, effect))
-                    logger.debug(f"⏰ {effect.name} expiró en {entity.name}")
+                    logger.debug(f"⌛ {effect.name} expiró en {entity.name}")
                 elif not effect.is_active:
                     effect.on_remove(entity)
                     effects_to_remove.append((entity, effect))
@@ -334,7 +333,7 @@ class EffectSystem:
                     effects_triggered += 1
             
             if effects_triggered > 0:
-                logger.debug(f"🛡️ {effects_triggered} efectos activados por daño en {target.name}")
+                logger.debug(f"💥 {effects_triggered} efectos activados por daño en {target.name}")
     
     def get_entity_effects(self, entity):
         """Obtiene efectos activos de una entidad"""
