@@ -1,0 +1,1 @@
+# Pygame Input Adapter

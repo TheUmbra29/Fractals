@@ -1,0 +1,1 @@
+# CharacterId Value Object

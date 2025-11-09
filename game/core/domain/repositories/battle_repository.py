@@ -1,0 +1,1 @@
+# Battle Repository Interface

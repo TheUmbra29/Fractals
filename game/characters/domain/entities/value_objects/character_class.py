@@ -1,0 +1,1 @@
+# Character Class Value Object
