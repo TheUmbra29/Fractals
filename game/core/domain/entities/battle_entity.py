@@ -8,14 +8,18 @@ from ..events.domain_event import DomainEvent
 from ..events.entity_damaged import EntityDamaged
 from ..events.entity_died import EntityDied
 
-# Importaciones para eventos específicos de FRACTALS
-try:
-    from ..events.dash_executed import DashExecuted
-    from ..events.entity_leveled_up import EntityLeveledUp
-except ImportError:
-    # Placeholders si los eventos no existen todavía
-    class DashExecuted(DomainEvent): pass
-    class EntityLeveledUp(DomainEvent): pass
+# Definir placeholders localmente para evitar importación circular
+class DashExecuted(DomainEvent): 
+    def __init__(self, dasher_id, target_id, damage):
+        self.dasher_id = dasher_id
+        self.target_id = target_id  
+        self.damage = damage
+
+class EntityLeveledUp(DomainEvent):
+    def __init__(self, entity_id, old_level, new_level):
+        self.entity_id = entity_id
+        self.old_level = old_level
+        self.new_level = new_level
 
 class BattleEntity:
     """ENTIDAD RAIZ con identidad y ciclo de vida propio para FRACTALS"""
@@ -118,8 +122,8 @@ class BattleEntity:
         if enemy.id in self._dash_targets_this_move:
             return []  # No embestir mismo enemigo dos veces en un mismo movimiento
             
-        # Calculamos el daño de la embestida (10% del ataque)
-        dash_damage = max(1, int(self.stats.attack * 0.1))
+        # Daño fijo de 15 según especificaciones
+        dash_damage = 15
         events = enemy.take_damage(dash_damage)
         self._dash_targets_this_move.add(enemy.id)
         

@@ -8,15 +8,15 @@ import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
-# IMPORTS CORRECTOS según tu estructura REAL
+# IMPORTS CORRECTOS segÃºn tu estructura REAL
 from infrastructure.ui.game_loop import GameLoop
 from infrastructure.persistence.repositories.in_memory_battle_repository import InMemoryBattleRepository
-from core.domain.services.turn_service import TurnService  # ✅ RUTA CORRECTA
+from core.domain.services.turn_service import TurnService
 
 def main():
     """Solo ensambla y inicia"""
-    print("🎮 FRACTALS - Composition Root")
-    print("🏗️  Rutas Corregidas")
+    print("ðŸŽ® FRACTALS - Composition Root")
+    print("ðŸ—ï¸  Rutas Corregidas")
     
     # Ensamblar dependencias
     battle_repo = InMemoryBattleRepository()

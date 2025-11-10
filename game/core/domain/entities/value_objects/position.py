@@ -10,9 +10,31 @@ class Position:
     def __post_init__(self):
         if not isinstance(self.x, int) or not isinstance(self.y, int):
             raise ValueError("Position coordinates must be integers")
-        # Eliminamos la restricción de no negativos para permitir cálculos
-        # La validación de límites del grid se hará en los servicios
     
+    # ✅ AGREGAR ESTOS MÉTODOS PARA HACER POSITION COMPARABLE
+    def __lt__(self, other: Any) -> bool:
+        """Permite comparar Position para ordenamiento (necesario para A*)"""
+        if not isinstance(other, Position):
+            return NotImplemented
+        # Ordenar primero por x, luego por y
+        return (self.x, self.y) < (other.x, other.y)
+    
+    def __le__(self, other: Any) -> bool:
+        if not isinstance(other, Position):
+            return NotImplemented
+        return (self.x, self.y) <= (other.x, other.y)
+    
+    def __gt__(self, other: Any) -> bool:
+        if not isinstance(other, Position):
+            return NotImplemented
+        return (self.x, self.y) > (other.x, other.y)
+    
+    def __ge__(self, other: Any) -> bool:
+        if not isinstance(other, Position):
+            return NotImplemented
+        return (self.x, self.y) >= (other.x, other.y)
+    
+    # Los métodos existentes...
     def distance_to(self, other: 'Position') -> int:
         """Distancia Manhattan para movimiento táctico"""
         return abs(self.x - other.x) + abs(self.y - other.y)

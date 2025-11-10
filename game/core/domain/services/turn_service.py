@@ -2,7 +2,9 @@
 SERVICIO DE TURNOS - En la ubicación REAL
 """
 from typing import List
+from .route_system import RouteSystem
 from ..entities.value_objects.position import Position
+from .route_system import MovementRoute
 
 class TurnService:
     """Maneja la lógica de turnos"""
@@ -85,3 +87,50 @@ class TurnService:
                         valid_positions.append(new_pos)
         
         return valid_positions
+    
+    def calculate_movement_route(self, battle_id, entity_id, target_position: Position) -> MovementRoute:
+        """Calcula y retorna una ruta sin ejecutarla (para previsualización)"""
+        battle = self.battle_repo.get_by_id(battle_id)
+        entity = battle.get_entity(entity_id)
+        
+        if not entity:
+            raise ValueError("Entidad no encontrada")
+            
+        return RouteSystem.calculate_route(entity.position, target_position, battle, entity)
+    
+    def execute_movement_with_dashes(self, battle_id, entity_id, target_position: Position) -> str:
+        """Ejecuta movimiento completo con embestidas automáticas"""
+        battle = self.battle_repo.get_by_id(battle_id)
+        entity = battle.get_entity(entity_id)
+        
+        # Validaciones básicas
+        if not entity or entity.team != "player" or battle.current_turn != "player" or entity.has_moved:
+            raise ValueError("Movimiento no válido")
+        
+        # Calcular ruta
+        route = RouteSystem.calculate_route(entity.position, target_position, battle, entity)
+        
+        if not route.path:
+            raise ValueError("No hay ruta válida hacia la posición objetivo")
+            
+        if not route.is_valid:
+            raise ValueError("La ruta excede el límite de velocidad")
+        
+        # Ejecutar movimiento
+        entity.move_to(target_position)
+        
+        # Ejecutar embestidas
+        dash_events = []
+        for enemy in route.dash_targets:
+            events = entity.execute_dash_attack(enemy)
+            dash_events.extend(events)
+        
+        # Consumir acción
+        battle.consume_player_action()
+        self.battle_repo.save(battle)
+        
+        # Mensaje de resultado
+        if route.dash_targets:
+            return f"{entity.name} se movió a {target_position} y embistió a {len(route.dash_targets)} enemigos ({-route.dash_damage} daño total)"
+        else:
+            return f"{entity.name} se movió a {target_position}"
