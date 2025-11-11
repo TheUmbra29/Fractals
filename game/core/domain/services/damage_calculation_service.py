@@ -1,21 +1,21 @@
-from ..entities.battle_entity import BattleEntity
+from ..config.game_config import GAME_CONFIG
 
 class DamageCalculationService:
-    """Servicio SIMPLE para calcular daño - SIN COMPLEJIDADES"""
+    """Servicio centralizado para cálculos de daño"""
     
     @staticmethod
-    def calculate_basic_attack_damage(attacker: BattleEntity, defender: BattleEntity) -> int:
-        """Daño básico: ataque - (defensa / 2)"""
-        damage = attacker.stats.attack - (defender.stats.defense // 2)
-        return max(1, damage)  # Mínimo 1 de daño
+    def calculate_basic_attack_damage(attacker, defender) -> int:
+        """Calcula daño usando stats reales en lugar de hardcode"""
+        base_damage = max(1, attacker.stats.attack - (defender.stats.defense // 2))
+        return base_damage
     
     @staticmethod
-    def calculate_ability_damage(attacker: BattleEntity, defender: BattleEntity, multiplier: float) -> int:
-        """Daño de habilidad: (ataque * multiplicador) - (defensa / 2)"""
+    def calculate_ability_damage(attacker, defender, multiplier: float) -> int:
+        """Calcula daño de habilidad"""
         damage = int(attacker.stats.attack * multiplier) - (defender.stats.defense // 2)
         return max(1, damage)
     
     @staticmethod
-    def calculate_dash_damage(attacker: BattleEntity) -> int:
-        """Daño de embestida: 10% del ataque"""
-        return max(1, int(attacker.stats.attack * 0.1))
+    def calculate_dash_damage() -> int:
+        """Daño de embestida desde configuración"""
+        return GAME_CONFIG.BASE_DASH_DAMAGE

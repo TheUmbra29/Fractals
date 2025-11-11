@@ -2,10 +2,10 @@
 SERVICIO DE TURNOS - En la ubicación REAL
 """
 from typing import List
-from .route_system import RouteSystem
 from ..entities.value_objects.position import Position
-from .route_system import MovementRoute
 from ..entities.value_objects.entity_id import EntityId
+from ..entities.value_objects.game_enums import Team
+from .route_system import RouteSystem, MovementRoute
 
 class TurnService:
     """Maneja la lógica de turnos"""
@@ -17,7 +17,7 @@ class TurnService:
         """Termina el turno del jugador"""
         battle = self.battle_repo.get_by_id(battle_id)
         
-        if battle.current_turn != "player":
+        if battle.current_turn != Team.PLAYER:
             raise ValueError("No es el turno del jugador")
         
         events = []
@@ -33,36 +33,28 @@ class TurnService:
         return events
     
     def move_entity(self, battle_id, entity_id, target_position: Position) -> str:
-        """Mueve una entidad"""
+        """Mueve una entidad usando enums"""
         battle = self.battle_repo.get_by_id(battle_id)
         entity = battle.get_entity(entity_id)
-        
         if not entity:
             raise ValueError("Entidad no encontrada")
-        
-        if entity.team != "player":
+        # ✅ ACTUALIZADO: Usar Team enum
+        if entity.team != Team.PLAYER:
             raise ValueError("Solo puedes mover entidades del jugador")
-        
-        if battle.current_turn != "player":
+        if battle.current_turn != Team.PLAYER:
             raise ValueError("No es el turno del jugador")
-        
         if entity.has_moved:
             raise ValueError("Esta entidad ya se movió este turno")
-        
         # Validar movimiento
         if not battle.is_position_valid(target_position):
             raise ValueError("Posición fuera del grid")
-        
         if battle.is_position_occupied(target_position):
             raise ValueError("Posición ocupada")
-        
         if battle.is_obstacle(target_position):
             raise ValueError("Hay un obstáculo en esa posición")
-        
         # Ejecutar movimiento
         entity.move_to(target_position)
         battle.consume_player_action()
-        
         self.battle_repo.save(battle)
         return f"{entity.name} movido a {target_position}"
     
@@ -71,7 +63,7 @@ class TurnService:
         battle = self.battle_repo.get_by_id(battle_id)
         entity = battle.get_entity(entity_id)
         
-        if not entity or entity.team != "player":
+        if not entity or entity.team != Team.PLAYER:
             return []
         
         valid_positions = []
@@ -101,42 +93,32 @@ class TurnService:
     
     def execute_movement_with_dashes(self, battle_id, entity_id, target_position: Position, 
                                    marked_dash_targets: List[EntityId] = None) -> str:
-        """Ejecuta movimiento con embestidas MANUALES según tu GDD"""
+        """Ejecuta movimiento con validaciones usando enums"""
         if marked_dash_targets is None:
             marked_dash_targets = []
-
         battle = self.battle_repo.get_by_id(battle_id)
         entity = battle.get_entity(entity_id)
-
-        # Validaciones básicas
-        if not entity or entity.team != "player" or battle.current_turn != "player" or entity.has_moved:
+        # ✅ ACTUALIZADO: Usar Team enum
+        if not entity or entity.team != Team.PLAYER or battle.current_turn != Team.PLAYER or entity.has_moved:
             raise ValueError("Movimiento no válido")
-
         # Calcular ruta
         route = RouteSystem.calculate_route(entity.position, target_position, battle, entity)
-
         if not route.path:
             raise ValueError("No hay ruta válida hacia la posición objetivo")
-
         if not route.is_valid:
             raise ValueError("La ruta excede el límite de velocidad")
-
         # FILTRAR embestidas: solo las marcadas manualmente + máximo 1 por enemigo
         valid_dash_targets = []
         dash_target_ids = set()
-        
         for enemy in route.dash_targets:
             # Solo incluir si fue marcado manualmente Y no ha sido embestido aún
             if (enemy.id in marked_dash_targets and 
                 enemy.id not in dash_target_ids and
                 enemy.id not in entity.dash_targets_this_move):
-                
                 valid_dash_targets.append(enemy)
                 dash_target_ids.add(enemy.id)
-
         # Ejecutar movimiento
         entity.move_to(target_position)
-
         # Ejecutar embestidas MANUALES filtradas
         dash_results = []
         for enemy in valid_dash_targets:
@@ -153,11 +135,9 @@ class TurnService:
                     "error": str(e),
                     "success": False
                 })
-
         # Consumir acción de movimiento
         battle.consume_player_action()
         self.battle_repo.save(battle)
-
         # Construir mensaje de resultado
         if dash_results:
             successful_dashes = [r for r in dash_results if r["success"]]
@@ -180,10 +160,10 @@ class TurnService:
             raise ValueError("Entidad no encontrada")
 
         # Validaciones básicas
-        if battle.current_turn != "player":
+        if battle.current_turn != Team.PLAYER:
             raise ValueError("No es el turno del jugador")
 
-        if caster.team != "player":
+        if caster.team != Team.PLAYER:
             raise ValueError("Solo puedes usar habilidades con entidades del jugador")
 
         # Ejecutar habilidad

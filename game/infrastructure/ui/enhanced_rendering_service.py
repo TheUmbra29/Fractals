@@ -68,13 +68,18 @@ class EnhancedRenderingService(RenderingService):
         """Renderiza una entidad con marcado especial para embestidas"""
         pos = entity.position
         team = entity.team
-        
+
         screen_x = self.grid_offset[0] + pos.x * self.cell_size
         screen_y = self.grid_offset[1] + pos.y * self.cell_size
-        
+
         # Color según equipo
-        color = self.colors["player"] if team == "player" else self.colors["enemy"]
-        
+        if team == "player" or (hasattr(team, 'value') and team.value == "player"):
+            color = (30, 144, 255)
+        elif team == "enemy" or (hasattr(team, 'value') and team.value == "enemy"):
+            color = self.colors["enemy"]
+        else:
+            color = self.colors["enemy"]
+
         # Dibujar entidad
         radius = self.cell_size // 3
         pygame.draw.circle(self.screen, color, (screen_x + self.cell_size//2, screen_y + self.cell_size//2), radius)

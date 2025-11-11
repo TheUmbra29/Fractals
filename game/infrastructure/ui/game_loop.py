@@ -5,6 +5,7 @@ import pygame
 from uuid import uuid4
 
 from core.domain.entities.aggregates.battle import Battle
+from core.domain.entities.value_objects.game_enums import Team, CharacterClass
 from core.domain.entities.battle_entity import BattleEntity
 from core.domain.entities.value_objects.entity_id import EntityId
 from core.domain.entities.value_objects.position import Position
@@ -94,26 +95,19 @@ class GameLoop:
                 self.renderer.cell_size, 
                 self.renderer.grid_size
             )
-            
             if not grid_pos:
                 return
-                
             target_pos = Position(grid_pos[0], grid_pos[1])
             clicked_entity = self._get_entity_at_position(battle, target_pos)
-            
-            # Validar que sea entidad del jugador y sea su turno
+            # ✅ ACTUALIZADO: Usar Team enum en lugar de strings
             if (clicked_entity and 
-                clicked_entity.team == "player" and 
-                battle.current_turn == "player"):
-                
+                clicked_entity.team == Team.PLAYER and 
+                battle.current_turn == Team.PLAYER):
                 self.context.selected_entity_id = clicked_entity.id
                 self.context.current_state = GameState.ENTITY_SELECTED
-                
                 # Mostrar menú de acciones
                 screen_pos = self._position_to_screen(clicked_entity.position)
                 self.action_menu = ActionMenu(clicked_entity, screen_pos)
-                self.valid_moves = self.turn_service.get_valid_moves(self.current_battle_id, clicked_entity.id)
-                
                 print(f"🎯 {clicked_entity.name} seleccionado")
                 print("📋 Menú de acciones disponible - Elige una acción")
 
@@ -125,6 +119,12 @@ class GameLoop:
         if not selected_entity:
             self._clear_selection()
             return
+        
+        # ✅ SOLO calcular movimientos válidos si NO estamos en modo trazado
+        if self.context.current_state == GameState.ENTITY_SELECTED:
+            self.valid_moves = self.turn_service.get_valid_moves(
+                self.current_battle_id, self.context.selected_entity_id
+            )
         
         # Click en el menú de acciones
         if self.input_service.is_mouse_clicked():
@@ -205,40 +205,19 @@ class GameLoop:
                 print(f"❌ Error al usar habilidad: {e}")
 
     def _handle_action_selection(self, action_type: str, entity: BattleEntity):
-        """Procesa selección de acción del menú - ahora con validación de PH"""
+        """Procesa selección de acción - LIMPIAR movimientos válidos al entrar en trazado"""
         battle = self.battle_repo.get_by_id(self.current_battle_id)
         
         if action_type == "move":
             self.context.current_state = GameState.TRACING_ROUTE
             self.context.pending_action = "move"
             self.action_menu.set_visibility(False)
+            
+            # ✅ LIMPIAR movimientos válidos para que no se muestre el rango azul
+            self.valid_moves = []
+            
             print("🛣️ Modo TRAZADO DE RUTA activado")
-            
-        elif action_type in entity.abilities:
-            # Validar PH y cooldown
-            if not entity.can_use_ability(action_type):
-                ability = entity.abilities[action_type]
-                if entity.current_ph < ability.ph_cost:
-                    print(f"❌ PH insuficiente. Necesitas {ability.ph_cost} PH, tienes {entity.current_ph}")
-                elif ability.current_cooldown > 0:
-                    print(f"❌ Habilidad en enfriamiento. TdE: {ability.current_cooldown} turnos")
-                else:
-                    print(f"❌ No puedes usar {ability.name} en este momento")
-                return
-                
-            # Entrar en modo selección de objetivo
-            self.context.current_state = GameState.TARGETING_ABILITY
-            self.context.pending_action = action_type
-            self.action_menu.set_visibility(False)
-            
-            ability = entity.abilities[action_type]
-            print(f"🎯 Modo {ability.name.upper()} - Selecciona un objetivo")
-            
-            # Mostrar objetivos válidos
-            valid_targets = self.turn_service.get_ability_targets(
-                self.current_battle_id, entity.id, action_type
-            )
-            print(f"🎯 Objetivos válidos: {len(valid_targets)}")
+            print("💡 Mueve el cursor para ver la ruta - Click en enemigos para embestida")
 
     def _update_route_preview(self, entity: BattleEntity, cursor_pos: Position):
         """Actualiza la previsualización de ruta en tiempo real"""
@@ -274,7 +253,7 @@ class GameLoop:
         """Maneja clicks durante el trazado de ruta"""
         clicked_entity = self._get_entity_at_position(battle, click_pos)
         
-        if clicked_entity and clicked_entity.team == "enemy":
+        if clicked_entity and clicked_entity.team == Team.ENEMY:
             # MARCAR/DESMARCAR embestida manual
             if clicked_entity.id in self.context.marked_dash_targets:
                 self.context.marked_dash_targets.remove(clicked_entity.id)
@@ -302,7 +281,7 @@ class GameLoop:
 
     def _execute_basic_attack(self, attacker, target_entity, battle):
         """Ejecuta ataque básico"""
-        if not target_entity or target_entity.team != "enemy":
+        if not target_entity or target_entity.team != Team.ENEMY:
             print("❌ Objetivo no válido para ataque")
             return
 
@@ -367,36 +346,31 @@ class GameLoop:
         self.renderer.render_battle(battle, self.context, self.valid_moves)
 
     def _create_initial_battle(self):
-        """Crea batalla inicial CON SISTEMA DE HABILIDADES"""
+        """Crea batalla inicial usando enums"""
         battle_id = uuid4()
         battle = Battle(battle_id, mode="arcade", grid_size=(8, 8))
-        
         player = BattleEntity(
             entity_id=EntityId.generate(),
             position=Position(1, 1),
-            stats=EntityStats(100, 100, 50, 50, 25, 15, 10),  
-            team="player",
+            stats=EntityStats(100, 100, 50, 50, 25, 15, 10),
+            team=Team.PLAYER,
             name="Ricchard",
-            character_class="Daño"  
+            character_class=CharacterClass.DAMAGE
         )
-        
         enemy = BattleEntity(
             entity_id=EntityId.generate(),
             position=Position(6, 6),
             stats=EntityStats(80, 80, 30, 30, 20, 10, 8),
-            team="enemy", 
+            team=Team.ENEMY,
             name="Enemy Bot",
-            character_class="Daño"
+            character_class=CharacterClass.DAMAGE
         )
-        
-        # Añadir obstáculos
-        battle.add_obstacle(Position(3, 3))
-        battle.add_obstacle(Position(4, 4))
-        battle.add_obstacle(Position(2, 5))
-        
+        # Añadir obstáculos desde configuración
+        from core.domain.config.game_config import GAME_CONFIG
+        for obstacle_pos in GAME_CONFIG.INITIAL_OBSTACLES:
+            battle.add_obstacle(Position(obstacle_pos[0], obstacle_pos[1]))
         battle.add_entity(player)
         battle.add_entity(enemy)
-        
         self.battle_repo.save(battle)
         print(f"✔️ Batalla creada: {player.name} vs {enemy.name}")
         return battle_id

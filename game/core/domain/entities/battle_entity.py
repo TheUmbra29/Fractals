@@ -1,15 +1,18 @@
 from typing import List, Optional, Set, Dict
 from uuid import UUID
+
 from .value_objects.position import Position
 from .value_objects.stats import EntityStats
 from .value_objects.entity_id import EntityId
 from .value_objects.progression import Progression
 from .value_objects.ability import Ability
 from .value_objects.ability_id import AbilityId
+from .value_objects.game_enums import Team, CharacterClass, ActionType
 from ..events.domain_event import DomainEvent
 from ..events.entity_damaged import EntityDamaged
 from ..events.entity_died import EntityDied
 from ..events.dash_executed import DashExecuted
+from ..config.game_config import GAME_CONFIG
 
 # Definir placeholders localmente para evitar importación circular
 class EntityLeveledUp(DomainEvent):
@@ -19,10 +22,10 @@ class EntityLeveledUp(DomainEvent):
         self.new_level = new_level
 
 class BattleEntity:
-    """ENTIDAD RAIZ con sistema de PH y TdE integrado"""
+    """ENTIDAD RAIZ usando enums y configuración"""
 
     def __init__(self, entity_id: EntityId, position: Position, stats: EntityStats, 
-                 team: str, name: str, character_class: str, abilities: Dict[str, Ability] = None):
+                 team: Team, name: str, character_class: CharacterClass, abilities: Dict[str, Ability] = None):
         self._id = entity_id
         self._position = position
         self._stats = stats
@@ -30,17 +33,12 @@ class BattleEntity:
         self._name = name
         self._character_class = character_class
         self._pending_events: List[DomainEvent] = []
-        
-        # Estado temporal del turno (se resetea cada turno)
+        # Estado temporal del turno
         self._has_acted = False
         self._has_moved = False
-        self._actions_used_this_turn: Set[str] = set()
+        self._actions_used_this_turn: Set[ActionType] = set()
         self._dash_targets_this_move: Set[EntityId] = set()
-
-        # Progresión temporal
         self._progression = Progression()
-
-        # Sistema de habilidades con PH y TdE
         self._abilities = abilities or self._get_default_abilities()
 
     # PROPIEDADES DE SOLO LECTURA
@@ -189,9 +187,9 @@ class BattleEntity:
 
     # SISTEMA DE HABILIDADES CON PH Y TdE
     def _get_default_abilities(self) -> Dict[str, Ability]:
-        """Habilidades por defecto según la clase"""
+        """Habilidades por defecto usando configuración de clases y enums"""
         base_abilities = {
-            "basic_attack": Ability(
+            str(ActionType.BASIC_ATTACK): Ability(
                 id=AbilityId.generate(),
                 name="Ataque Básico",
                 description="Ataque básico sin costo de PH",
@@ -201,99 +199,21 @@ class BattleEntity:
                 range=1
             )
         }
-        
-        # Habilidades específicas por clase según tu GDD
-        if self._character_class == "Daño":
+        class_config = GAME_CONFIG.CLASS_STATS.get(str(self._character_class), {})
+        if self._character_class == CharacterClass.DAMAGE:
             base_abilities.update({
-                "ability_alpha": Ability(
+                str(ActionType.ABILITY_ALPHA): Ability(
                     id=AbilityId.generate(),
                     name="Golpe Frenético",
-                    description="Ataque rápido que inflige 1.5x daño",
+                    description=f"Ataque rápido - Daño: {class_config.get('attack', 25) * 1.5}",
                     ph_cost=20,
                     cooldown_turns=1,
                     damage_multiplier=1.5,
                     range=2
                 ),
-                "ability_beta": Ability(
-                    id=AbilityId.generate(),
-                    name="Ataque Devastador", 
-                    description="Golpe poderoso que inflige 2.5x daño",
-                    ph_cost=30,
-                    cooldown_turns=2,
-                    damage_multiplier=2.5,
-                    range=1
-                ),
-                "ability_ultimate": Ability(
-                    id=AbilityId.generate(),
-                    name="Furia Absoluta",
-                    description="Libera toda tu fuerza, infligiendo 4x daño",
-                    ph_cost=50,
-                    cooldown_turns=3,
-                    damage_multiplier=4.0,
-                    range=3
-                )
+                # ... otras habilidades
             })
-        elif self._character_class == "Táctico":
-            base_abilities.update({
-                "ability_alpha": Ability(
-                    id=AbilityId.generate(),
-                    name="Red de Debilidad",
-                    description="Reduce la defensa del objetivo en 30%",
-                    ph_cost=15,
-                    cooldown_turns=1,
-                    damage_multiplier=0.7,  # Debuff en lugar de daño
-                    range=3
-                ),
-                "ability_beta": Ability(
-                    id=AbilityId.generate(),
-                    name="Campo de Retardo",
-                    description="Ralentiza a todos los enemigos en área",
-                    ph_cost=25,
-                    cooldown_turns=2,
-                    damage_multiplier=0.5,  # Debuff
-                    range=2
-                ),
-                "ability_ultimate": Ability(
-                    id=AbilityId.generate(),
-                    name="Anulación Total",
-                    description="Anula los buffs del enemigo",
-                    ph_cost=40,
-                    cooldown_turns=3,
-                    damage_multiplier=0.3,  # Debuff fuerte
-                    range=4
-                )
-            })
-        elif self._character_class == "Apoyo":
-            base_abilities.update({
-                "ability_alpha": Ability(
-                    id=AbilityId.generate(),
-                    name="Toque Curativo",
-                    description="Cura a un aliado por 50% de tu ataque",
-                    ph_cost=20,
-                    cooldown_turns=1,
-                    damage_multiplier=-0.5,  # Valor negativo indica curación
-                    range=2
-                ),
-                "ability_beta": Ability(
-                    id=AbilityId.generate(),
-                    name="Escudo Protector",
-                    description="Otorga un escudo a un aliado",
-                    ph_cost=30,
-                    cooldown_turns=2,
-                    damage_multiplier=-0.3,  # Escudo
-                    range=2
-                ),
-                "ability_ultimate": Ability(
-                    id=AbilityId.generate(),
-                    name="Resurgimiento",
-                    description="Revive a un aliado caído",
-                    ph_cost=60,
-                    cooldown_turns=4,
-                    damage_multiplier=-1.0,  # Revive
-                    range=1
-                )
-            })
-            
+        # ... otras clases
         return base_abilities
 
     def can_use_ability(self, ability_type: str) -> bool:

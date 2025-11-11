@@ -4,6 +4,7 @@ SERVICIO DE RENDERIZADO - Con imports ABSOLUTOS
 import pygame
 from typing import List, Optional
 from core.domain.entities.value_objects.position import Position
+from core.domain.entities.value_objects.game_enums import Team
 
 class RenderingService:
     """Servicio de renderizado especializado"""
@@ -51,20 +52,20 @@ class RenderingService:
     def render_battle(self, battle, selected_entity_id: Optional[str] = None, valid_moves: List[Position] = None) -> None:
         """Renderiza el estado completo de la batalla"""
         self.screen.fill(self.colors["background"])
-        
+
         # Renderizar elementos en orden
         self._render_grid()
         self._render_valid_moves(valid_moves)
-        
+
         for obstacle in battle._obstacles:
             self._render_obstacle(obstacle)
-        
+
         for entity in battle._entities.values():
             is_selected = entity.id == selected_entity_id
             self._render_entity(entity, is_selected)
-        
+
         self._render_ui(battle)
-        
+
         pygame.display.flip()
         self.clock.tick(60)
     
@@ -101,35 +102,58 @@ class RenderingService:
         """Renderiza una entidad en el grid"""
         pos = entity.position
         team = entity.team
-        
+
+        print(f"🔍 RENDER_ENTITY DEBUG:")
+        print(f"   - Nombre: {entity.name}")
+        print(f"   - Team: {team} (tipo: {type(team)})")
+        print(f"   - Team value: {team.value if hasattr(team, 'value') else 'N/A'}")
+        print(f"   - Team == Team.PLAYER: {team == Team.PLAYER}")
+        print(f"   - Team == 'player': {team == 'player'}")
+        print(f"   - Team == Team.ENEMY: {team == Team.ENEMY}")
+        print(f"   - Team == 'enemy': {team == 'enemy'}")
+
         screen_x = self.grid_offset[0] + pos.x * self.cell_size
         screen_y = self.grid_offset[1] + pos.y * self.cell_size
-        
-        # Color según equipo
-        color = self.colors["player"] if team == "player" else self.colors["enemy"]
-        
+
+        color = None
+        if team == Team.PLAYER:
+            color = self.colors["player"]
+            print(f"   - COLOR: AZUL (Player)")
+        elif team == Team.ENEMY:
+            color = self.colors["enemy"] 
+            print(f"   - COLOR: ROJO (Enemy)")
+        else:
+            # Fallback por si acaso
+            color = self.colors["enemy"]
+            print(f"   - COLOR: ROJO (Fallback - team desconocido: {team})")
+
+        if team == Team.PLAYER or (isinstance(team, str) and team.upper() == "PLAYER"):
+            color = self.colors["player"]
+        else:
+            color = self.colors["enemy"]
+
         # Dibujar entidad
         radius = self.cell_size // 3
         pygame.draw.circle(self.screen, color, (screen_x + self.cell_size//2, screen_y + self.cell_size//2), radius)
-        
+
         # Resaltar si está seleccionada
         if is_selected:
-            pygame.draw.circle(self.screen, self.colors["selected"], 
-                             (screen_x + self.cell_size//2, screen_y + self.cell_size//2), 
+            pygame.draw.circle(self.screen, self.colors["selected"],
+                             (screen_x + self.cell_size//2, screen_y + self.cell_size//2),
                              radius + 2, 2)  # Borde amarillo
-        
+
         # Barra de salud
         health_percent = entity.stats.current_hp / entity.stats.max_hp
         bar_width = self.cell_size - 10
         bar_height = 6
-        
+
         # Fondo barra
-        pygame.draw.rect(self.screen, (100, 100, 100), 
+        pygame.draw.rect(self.screen, (100, 100, 100),
                         (screen_x + 5, screen_y - 10, bar_width, bar_height))
         # Salud actual
-        pygame.draw.rect(self.screen, self.colors["health_bar"], 
+        pygame.draw.rect(self.screen, self.colors["health_bar"],
                         (screen_x + 5, screen_y - 10, int(bar_width * health_percent), bar_height))
-        
+
         # Nombre de la entidad
         name_surface = self.font.render(entity.name, True, self.colors["text"])
         name_rect = name_surface.get_rect(center=(screen_x + self.cell_size//2, screen_y - 25))
@@ -146,26 +170,22 @@ class RenderingService:
         )
     
     def _render_ui(self, battle) -> None:
-        """Renderiza la interfaz de usuario"""
-        # Información del turno - MUY CLARA
-        turn_color = self.colors["player_turn"] if battle.current_turn == "player" else self.colors["enemy_turn"]
-        turn_text = f"TURNO: {'JUGADOR' if battle.current_turn == 'player' else 'ENEMIGO'}"
+        """Renderiza la interfaz de usuario actualizada con enums"""
+
+        turn_color = self.colors["player_turn"] if battle.current_turn == Team.PLAYER else self.colors["enemy_turn"]
+        turn_text = f"TURNO: {'JUGADOR' if battle.current_turn == Team.PLAYER else 'ENEMIGO'}"
         turn_surface = self.big_font.render(turn_text, True, turn_color)
         self.screen.blit(turn_surface, (20, 20))
-        
-        # Información detallada
+
         info_lines = [
             f"Acciones: {battle.actions_remaining}/3",
             f"Turno: {battle.turn_count}",
             f"Modo: {battle.mode}",
             f"Jugadores: {len(battle.get_player_entities())} | Enemigos: {len(battle.get_enemy_entities())}"
         ]
-        
         for i, line in enumerate(info_lines):
             info_surface = self.font.render(line, True, self.colors["text"])
             self.screen.blit(info_surface, (20, 60 + i * 25))
-        
-        # Controles
         controls = [
             "CONTROLES:",
             "CLICK - Seleccionar/Mover entidad", 
@@ -173,7 +193,6 @@ class RenderingService:
             "R - Reiniciar batalla",
             "ESC - Salir"
         ]
-        
         for i, control in enumerate(controls):
             control_surface = self.font.render(control, True, self.colors["text"])
             self.screen.blit(control_surface, (500, 20 + i * 25))

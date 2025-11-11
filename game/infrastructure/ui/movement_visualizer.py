@@ -26,14 +26,13 @@ class MovementVisualizer:
     def render_route(self, screen: pygame.Surface, route: Optional[MovementRoute], 
                     current_position: Position, is_dragging: bool = False,
                     marked_dash_targets: List[EntityId] = None) -> None:
-        """Renderiza una ruta completa con embestidas manuales"""
+        """Renderiza una ruta completa con conexiones de embestidas"""
         if not route or not route.path:
             return
             
         if marked_dash_targets is None:
             marked_dash_targets = []
             
-        # Determinar color basado en validez
         route_color = self.colors["valid_route"] if route.is_valid else self.colors["invalid_route"]
         
         # Renderizar línea de ruta
@@ -42,7 +41,11 @@ class MovementVisualizer:
         # Renderizar nodos del camino
         self._render_path_nodes(screen, route.path)
         
-        # Renderizar enemigos para embestida (diferenciar marcados manualmente)
+        # ✅ NUEVO: Renderizar conexiones de embestidas
+        if route.dash_targets:
+            self._render_dash_connections(screen, route.dash_targets, route.path, route_color)
+        
+        # Renderizar enemigos para embestida
         self._render_dash_targets(screen, route.dash_targets, marked_dash_targets, route_color)
         
         # Renderizar información de daño
@@ -110,7 +113,9 @@ class MovementVisualizer:
             pygame.draw.circle(screen, color, target_screen, radius, 3)
             
             # Línea conectada desde la ruta al enemigo
-            closest_route_point = self._find_closest_route_point(target.position, dash_targets)
+            # Corregido: pasar la ruta de posiciones, no la lista de entidades
+            route_positions = [t.position if hasattr(t, 'position') else t for t in dash_targets]
+            closest_route_point = self._find_closest_route_point(target.position, route_positions)
             if closest_route_point:
                 route_screen = self._position_to_screen(closest_route_point)
                 pygame.draw.line(screen, color, route_screen, target_screen, 2)
@@ -176,7 +181,52 @@ class MovementVisualizer:
         y = self.grid_offset[1] + position.y * self.cell_size + self.cell_size // 2
         return (x, y)
     
-    def _find_closest_route_point(self, target_pos: Position, dash_targets: List[BattleEntity]) -> Optional[Position]:
-        """Encuentra el punto de ruta más cercano a un enemigo"""
-        # Implementación simplificada - en una versión completa usaríamos la ruta real
-        return target_pos
+    def _find_closest_route_point(self, target_pos: Position, route_path: List[Position]) -> Optional[Position]:
+        """Encuentra el punto de ruta más cercano REALMENTE"""
+        if not route_path:
+            return None
+            
+        closest_point = None
+        min_distance = float('inf')
+        
+        for route_pos in route_path:
+            distance = target_pos.distance_to(route_pos)
+            if distance < min_distance:
+                min_distance = distance
+                closest_point = route_pos
+        
+        # Solo retornar si está suficientemente cerca (ad-yacente)
+        return closest_point if min_distance <= 1 else None
+
+    def _render_dash_connections(self, screen: pygame.Surface, dash_targets: List[BattleEntity], 
+                            route_path: List[Position], color: tuple):
+        """Renderiza conexiones entre ruta y enemigos embestidos"""
+        for target in dash_targets:
+            closest_route_point = self._find_closest_route_point(target.position, route_path)
+            if closest_route_point:
+                target_screen = self._position_to_screen(target.position)
+                route_screen = self._position_to_screen(closest_route_point)
+                
+                # Línea punteada para conexión
+                self._draw_dashed_line(screen, color, route_screen, target_screen, dash_length=8)
+                
+                # Punto de conexión en la ruta
+                pygame.draw.circle(screen, color, route_screen, 6, 2)
+
+    def _draw_dashed_line(self, screen: pygame.Surface, color: tuple, start: tuple, end: tuple, dash_length: int = 5):
+        """Dibuja una línea punteada"""
+        dx = end[0] - start[0]
+        dy = end[1] - start[1]
+        distance = max(1, (dx**2 + dy**2)**0.5)
+        dashes = int(distance / dash_length)
+        
+        for i in range(dashes):
+            start_percent = i / dashes
+            end_percent = (i + 0.5) / dashes  # Mitad del dash para crear el espacio
+            
+            start_x = start[0] + dx * start_percent
+            start_y = start[1] + dy * start_percent
+            end_x = start[0] + dx * end_percent  
+            end_y = start[1] + dy * end_percent
+            
+            pygame.draw.line(screen, color, (start_x, start_y), (end_x, end_y), 2)

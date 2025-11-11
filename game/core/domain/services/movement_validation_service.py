@@ -1,25 +1,19 @@
 from typing import Set, List
 from ..entities.battle_entity import BattleEntity
 from ..entities.value_objects.position import Position
+from ..entities.value_objects.game_enums import Team
 
 class MovementValidationService:
     """Servicio para validar movimientos en FRACTALS"""
     
     @staticmethod
     def validate_movement_path(start: Position, end: Position, obstacles: Set[Position], entities: List[BattleEntity]) -> bool:
-        """Valida que el movimiento sea válido (sin pasar por obstáculos o aliados)"""
-        # Por simplicidad, validamos solo posición final por ahora
-        # En el futuro podríamos validar el camino completo
-        
-        # Verificar que la posición final no esté ocupada por un aliado
+        """Valida movimiento usando enums"""
         for entity in entities:
-            if entity.position == end and entity.team == "player":  # Solo aliados bloquean
+            if entity.position == end and entity.team == Team.PLAYER:  # Solo aliados bloquean
                 return False
-        
-        # Verificar que no sea un obstáculo
         if end in obstacles:
             return False
-            
         return True
     
     @staticmethod

@@ -1,30 +1,31 @@
 from typing import List, Dict, Optional, Set
 from uuid import UUID, uuid4
+
 from ..value_objects.entity_id import EntityId 
 from ..value_objects.position import Position  
+from ..value_objects.game_enums import Team, GameState
 from ..battle_entity import BattleEntity
 from ...events.domain_event import DomainEvent
 from ...events.player_turn_started import PlayerTurnStarted
 from ...events.player_turn_ended import PlayerTurnEnded
 from ...events.enemy_turn_started import EnemyTurnStarted
 from ...events.enemy_turn_ended import EnemyTurnEnded
+from ...config.game_config import GAME_CONFIG
 
 class Battle:
     """AGREGADO RAIZ - Representa una batalla completa en FRACTALS"""
     
-    def __init__(self, battle_id: UUID, mode: str = "arcade", grid_size: tuple = (8, 8)):
+    def __init__(self, battle_id: UUID, mode: str = "arcade", grid_size: tuple = None):
         self._id = battle_id
-        self._mode = mode  # "tutorial", "arcade"
-        self._grid_size = grid_size
+        self._mode = mode
+        self._grid_size = grid_size or GAME_CONFIG.GRID_SIZE
         self._entities: Dict[EntityId, BattleEntity] = {}
-        self._obstacles: Set[Position] = set()  # Estructuras de cobertura
-        self._current_turn = "player"  # "player" | "enemy"
+        self._obstacles: Set[Position] = set()
+        self._current_turn = Team.PLAYER
         self._turn_count = 1
-        self._actions_remaining = 3  # 3 acciones por turno según GDD
+        self._actions_remaining = GAME_CONFIG.ACTIONS_PER_TURN
         self._pending_events: List[DomainEvent] = []
-        
-        # Estado específico de FRACTALS
-        self._wave_number = 1  # Para modo arcade
+        self._wave_number = 1
         self._is_completed = False
 
     # PROPIEDADES DE SOLO LECTURA
@@ -41,8 +42,25 @@ class Battle:
         return self._grid_size
 
     @property
-    def current_turn(self) -> str:
+    def current_turn(self) -> Team:
         return self._current_turn
+    # NUEVOS MÉTODOS PÚBLICOS PARA ENCAPSULAMIENTO
+    def get_entities(self) -> List[BattleEntity]:
+        """Obtiene todas las entidades (copia)"""
+        return list(self._entities.values())
+
+    def get_obstacles(self) -> Set[Position]:
+        """Obtiene todos los obstáculos (copia)"""
+        return self._obstacles.copy()
+
+    def get_entity_count(self) -> int:
+        """Número total de entidades"""
+        return len(self._entities)
+
+    def get_alive_entities_by_team(self, team: Team) -> List[BattleEntity]:
+        """Obtiene entidades vivas de un equipo específico"""
+        return [entity for entity in self._entities.values() 
+                if entity.team == team and entity.stats.is_alive()]
 
     @property
     def turn_count(self) -> int:
@@ -71,19 +89,21 @@ class Battle:
 
     def get_player_entities(self) -> List[BattleEntity]:
         """Obtiene todas las entidades del jugador"""
-        return [entity for entity in self._entities.values() if entity.team == "player"]
+        return [entity for entity in self._entities.values() 
+                if entity.team == Team.PLAYER]
 
     def get_enemy_entities(self) -> List[BattleEntity]:
         """Obtiene todas las entidades enemigas"""
-        return [entity for entity in self._entities.values() if entity.team == "enemy"]
+        return [entity for entity in self._entities.values() 
+                if entity.team == Team.ENEMY]
 
     def get_alive_player_entities(self) -> List[BattleEntity]:
         """Obtiene entidades del jugador que están vivas"""
-        return [entity for entity in self.get_player_entities() if entity.stats.is_alive()]
+        return self.get_alive_entities_by_team(Team.PLAYER)
 
     def get_alive_enemy_entities(self) -> List[BattleEntity]:
         """Obtiene entidades enemigas que están vivas"""
-        return [entity for entity in self.get_enemy_entities() if entity.stats.is_alive()]
+        return self.get_alive_entities_by_team(Team.ENEMY)
 
     # GESTIÓN DE OBSTÁCULOS/COBERTURA
     def add_obstacle(self, position: Position) -> None:
@@ -96,63 +116,46 @@ class Battle:
 
     # GESTIÓN DE TURNOS Y ACCIONES (NÚCLEO DE FRACTALS)
     def consume_player_action(self) -> List[DomainEvent]:
-        """
-        Consume una acción del jugador según GDD de FRACTALS
-        Retorna eventos si el turno termina
-        """
-        if self._current_turn != "player":
+        """Consume una acción del jugador usando configuración"""
+        if self._current_turn != Team.PLAYER:
             raise InvalidTurnError("No es el turno del jugador")
-            
         if self._actions_remaining <= 0:
             raise NoActionsRemainingError("No quedan acciones este turno")
-
         self._actions_remaining -= 1
         events = []
-        
-        # Si no quedan acciones, terminar turno automáticamente
         if self._actions_remaining <= 0:
             events.extend(self._end_player_turn())
-            
         return events
 
     def _end_player_turn(self) -> List[DomainEvent]:
-        """Finaliza el turno del jugador y pasa al turno de la IA"""
+        """Finaliza el turno del jugador"""
         events = [PlayerTurnEnded(self._id, self._turn_count)]
-        
-        # Resetear estado de todas las entidades aliadas
         for entity in self.get_player_entities():
             entity.reset_turn_state()
-            
-        # Cambiar a turno de la IA
-        self._current_turn = "enemy"
+        self._current_turn = Team.ENEMY
         events.append(EnemyTurnStarted(self._id, self._turn_count))
-        
-        # En un futuro, aquí se ejecutaría la lógica de IA
-        # Por ahora, terminamos inmediatamente el turno enemigo
         events.extend(self._end_enemy_turn())
-        
         return events
 
     def _end_enemy_turn(self) -> List[DomainEvent]:
-        """Finaliza el turno de la IA y pasa al siguiente turno del jugador"""
+        """Finaliza el turno de la IA"""
         events = [EnemyTurnEnded(self._id, self._turn_count)]
-        
-        # Resetear estado de todas las entidades enemigas
         for entity in self.get_enemy_entities():
             entity.reset_turn_state()
-            
-        # Preparar nuevo turno del jugador
-        self._current_turn = "player"
+        self._current_turn = Team.PLAYER
         self._turn_count += 1
-        self._actions_remaining = 3  # Resetear a 3 acciones
-        
+        self._actions_remaining = GAME_CONFIG.ACTIONS_PER_TURN
         events.append(PlayerTurnStarted(self._id, self._turn_count))
-        
-        # Verificar condiciones de victoria/derrota
-        victory_events = self._check_battle_conditions()
-        events.extend(victory_events)
-        
+        events.extend(self._check_battle_conditions())
         return events
+    def is_position_occupied_by_ally(self, position: Position, entity: BattleEntity) -> bool:
+        """Verifica si una posición está ocupada por un aliado"""
+        for other_entity in self._entities.values():
+            if (other_entity.position == position and 
+                other_entity.team == entity.team and
+                other_entity.id != entity.id):
+                return True
+        return False
 
     def _check_battle_conditions(self) -> List[DomainEvent]:
         """Verifica condiciones de victoria/derrota según el modo"""
