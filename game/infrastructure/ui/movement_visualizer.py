@@ -3,29 +3,35 @@ from typing import List, Optional
 from core.domain.entities.value_objects.position import Position
 from core.domain.entities.battle_entity import BattleEntity
 from core.domain.services.route_system import MovementRoute
+from core.domain.entities.value_objects.entity_id import EntityId
 
 class MovementVisualizer:
-    """Renderiza rutas dinámicas y feedback visual para el movimiento"""
-    
+    """Renderiza rutas dinámicas con soporte para embestidas manuales"""
+
     def __init__(self, grid_offset: tuple, cell_size: int, grid_size: tuple):
         self.grid_offset = grid_offset
         self.cell_size = cell_size
         self.grid_size = grid_size
         
-        # Colores según especificaciones
+        # Colores mejorados
         self.colors = {
             "valid_route": (100, 200, 100),      # Verde
             "invalid_route": (255, 165, 0),      # Naranja  
-            "dash_target": (255, 50, 50),        # Rojo para enemigos marcados
+            "dash_target": (255, 50, 50),        # Rojo para enemigos detectados
+            "marked_dash_target": (255, 0, 0),   # Rojo intenso para marcados manualmente
             "route_line": (255, 255, 255, 180),  # Línea blanca semitransparente
             "path_node": (200, 230, 255, 150),   # Nodos de ruta azul claro
         }
-    
+
     def render_route(self, screen: pygame.Surface, route: Optional[MovementRoute], 
-                    current_position: Position, is_dragging: bool = False) -> None:
-        """Renderiza una ruta completa con todos sus elementos"""
+                    current_position: Position, is_dragging: bool = False,
+                    marked_dash_targets: List[EntityId] = None) -> None:
+        """Renderiza una ruta completa con embestidas manuales"""
         if not route or not route.path:
             return
+            
+        if marked_dash_targets is None:
+            marked_dash_targets = []
             
         # Determinar color basado en validez
         route_color = self.colors["valid_route"] if route.is_valid else self.colors["invalid_route"]
@@ -36,13 +42,13 @@ class MovementVisualizer:
         # Renderizar nodos del camino
         self._render_path_nodes(screen, route.path)
         
-        # Renderizar enemigos marcados para embestida
-        self._render_dash_targets(screen, route.dash_targets, route_color)
+        # Renderizar enemigos para embestida (diferenciar marcados manualmente)
+        self._render_dash_targets(screen, route.dash_targets, marked_dash_targets, route_color)
         
-        # Renderizar información de daño de embestida
+        # Renderizar información de daño
         if route.dash_targets:
-            self._render_dash_damage_info(screen, route)
-    
+            self._render_dash_damage_info(screen, route, marked_dash_targets)
+
     def _render_route_line(self, screen: pygame.Surface, start_pos: Position, 
                           path: List[Position], color: tuple) -> None:
         """Renderiza la línea continua de la ruta"""
@@ -68,75 +74,102 @@ class MovementVisualizer:
             # Dibujar punto final más grande
             end_pos = screen_points[-1]
             pygame.draw.circle(screen, color, end_pos, 8)
-    
+
     def _render_path_nodes(self, screen: pygame.Surface, path: List[Position]) -> None:
         """Renderiza nodos individuales del camino"""
         for i, pos in enumerate(path):
             screen_pos = self._position_to_screen(pos)
             
-            # Dibujar círculo en cada nodo
-            pygame.draw.circle(screen, self.colors["path_node"], screen_pos, 5)
-            
-            # Número de paso (opcional)
-            if i < len(path) - 1:  # No mostrar número en el último nodo
+            # Dibujar círculo en cada nodo (excepto el último que ya tiene uno grande)
+            if i < len(path) - 1:
+                pygame.draw.circle(screen, self.colors["path_node"], screen_pos, 5)
+                
+                # Número de paso (opcional)
                 font = pygame.font.Font(None, 20)
                 text = font.render(str(i+1), True, (255, 255, 255))
                 text_rect = text.get_rect(center=(screen_pos[0], screen_pos[1] - 15))
                 screen.blit(text, text_rect)
-    
-    def _render_dash_targets(self, screen: pygame.Surface, dash_targets: List[BattleEntity], route_color: tuple) -> None:
-        """Renderiza enemigos marcados para embestida con círculos rojos conectados"""
+
+    def _render_dash_targets(self, screen: pygame.Surface, dash_targets: List[BattleEntity], 
+                           marked_dash_targets: List[EntityId], route_color: tuple) -> None:
+        """Renderiza enemigos para embestida diferenciando marcados manualmente"""
         for target in dash_targets:
             target_screen = self._position_to_screen(target.position)
             
-            # Círculo rojo pulsante alrededor del enemigo
-            radius = self.cell_size // 2 + 5
-            pygame.draw.circle(screen, self.colors["dash_target"], target_screen, radius, 3)
+            # Determinar color y tamaño según si está marcado manualmente
+            if target.id in marked_dash_targets:
+                color = self.colors["marked_dash_target"]  # Rojo intenso
+                radius = self.cell_size // 2 + 10
+                pulse = abs(pygame.time.get_ticks() % 1000 - 500) / 500  # Efecto pulsante
+                radius = int(radius * (0.8 + pulse * 0.2))
+            else:
+                color = self.colors["dash_target"]  # Rojo normal
+                radius = self.cell_size // 2 + 5
+            
+            # Círculo alrededor del enemigo
+            pygame.draw.circle(screen, color, target_screen, radius, 3)
             
             # Línea conectada desde la ruta al enemigo
             closest_route_point = self._find_closest_route_point(target.position, dash_targets)
             if closest_route_point:
                 route_screen = self._position_to_screen(closest_route_point)
-                pygame.draw.line(screen, self.colors["dash_target"], route_screen, target_screen, 2)
-                
-            # Icono de espada pequeño
-            self._render_sword_icon(screen, target_screen)
-    
-    def _render_dash_damage_info(self, screen: pygame.Surface, route: MovementRoute) -> None:
-        """Renderiza tooltip con información de daño de embestida"""
+                pygame.draw.line(screen, color, route_screen, target_screen, 2)
+            
+            # Icono de espada (más grande si está marcado)
+            self._render_sword_icon(screen, target_screen, target.id in marked_dash_targets)
+
+    def _render_dash_damage_info(self, screen: pygame.Surface, route: MovementRoute, 
+                               marked_dash_targets: List[EntityId]) -> None:
+        """Renderiza tooltip con información de daño diferenciando embestidas manuales"""
         if not route.dash_targets:
             return
             
+        # Calcular daño de embestidas marcadas vs automáticas
+        auto_dash_count = len([t for t in route.dash_targets if t.id not in marked_dash_targets])
+        manual_dash_count = len([t for t in route.dash_targets if t.id in marked_dash_targets])
+        total_damage = len(route.dash_targets) * 15
+        
         # Posicionar en la parte superior de la pantalla
-        info_x, info_y = 400, 50
+        info_x, info_y = 400, 30
         
         # Fondo semitransparente
-        info_bg = pygame.Surface((200, 60), pygame.SRCALPHA)
+        info_bg = pygame.Surface((250, 80), pygame.SRCALPHA)
         info_bg.fill((40, 40, 60, 200))
         screen.blit(info_bg, (info_x - 10, info_y - 10))
         
-        # Texto de daño
-        font = pygame.font.Font(None, 24)
-        damage_text = f"Embestidas: {len(route.dash_targets)}"
-        damage_surface = font.render(damage_text, True, (255, 255, 255))
-        screen.blit(damage_surface, (info_x, info_y))
+        # Texto de información
+        font = pygame.font.Font(None, 22)
         
-        damage_calc = f"Daño total: 15 × {len(route.dash_targets)} = {route.dash_damage}"
-        calc_surface = font.render(damage_calc, True, (255, 200, 200))
-        screen.blit(calc_surface, (info_x, info_y + 25))
-    
-    def _render_sword_icon(self, screen: pygame.Surface, position: tuple) -> None:
-        """Renderiza un pequeño icono de espada"""
+        if manual_dash_count > 0:
+            manual_text = f"Embestidas MANUALES: {manual_dash_count}"
+            manual_surface = font.render(manual_text, True, (255, 100, 100))
+            screen.blit(manual_surface, (info_x, info_y))
+            
+        if auto_dash_count > 0:
+            auto_text = f"Embestidas AUTOMÁTICAS: {auto_dash_count}"
+            auto_surface = font.render(auto_text, True, (255, 200, 200))
+            screen.blit(auto_surface, (info_x, info_y + 20))
+        
+        damage_text = f"Daño total: {total_damage}"
+        damage_surface = font.render(damage_text, True, (255, 255, 255))
+        screen.blit(damage_surface, (info_x, info_y + 45))
+
+    def _render_sword_icon(self, screen: pygame.Surface, position: tuple, is_marked: bool = False):
+        """Renderiza icono de espada (más grande si está marcado)"""
         x, y = position
+        size_multiplier = 1.5 if is_marked else 1.0
+        
         # Dibujar espada simple (triángulo)
         points = [
-            (x, y - 8),      # Punta
-            (x - 4, y + 4),  # Base izquierda  
-            (x + 4, y + 4)   # Base derecha
+            (x, y - 8 * size_multiplier),                    # Punta
+            (x - 4 * size_multiplier, y + 4 * size_multiplier),  # Base izquierda  
+            (x + 4 * size_multiplier, y + 4 * size_multiplier)   # Base derecha
         ]
-        pygame.draw.polygon(screen, (255, 255, 255), points)
-        pygame.draw.polygon(screen, (200, 200, 200), points, 1)
-    
+        
+        color = (255, 255, 255) if is_marked else (200, 200, 200)
+        pygame.draw.polygon(screen, color, points)
+        pygame.draw.polygon(screen, (150, 150, 150), points, 1)
+
     def _position_to_screen(self, position: Position) -> tuple:
         """Convierte posición del grid a coordenadas de pantalla"""
         x = self.grid_offset[0] + position.x * self.cell_size + self.cell_size // 2

@@ -1,5 +1,5 @@
 """
-GAME LOOP ACTUALIZADO - Con sistema de rutas y arrastre
+GAME LOOP COMPLETO - Con sistema de estados y menú contextual
 """
 import pygame
 from uuid import uuid4
@@ -12,10 +12,12 @@ from core.domain.entities.value_objects.stats import EntityStats
 
 from .input_service import InputService
 from .enhanced_rendering_service import EnhancedRenderingService
+from .game_states import GameState, GameContext
+from .action_menu import ActionMenu
 
 class GameLoop:
-    """Coordina el flujo del juego con sistema de rutas dinámicas"""
-    
+    """Game Loop completo con sistema de estados y menú contextual"""
+
     def __init__(self, battle_repository, turn_service):
         self.battle_repo = battle_repository
         self.turn_service = turn_service
@@ -23,23 +25,23 @@ class GameLoop:
         self.renderer = EnhancedRenderingService()
         
         self.current_battle_id = None
-        self.selected_entity_id = None
         self.running = False
+        
+        # Contexto del juego y menú
+        self.context = GameContext()
+        self.action_menu = None
         self.valid_moves = []
         
-        # ESTADOS NUEVOS PARA EL SISTEMA DE RUTAS
-        self.is_dragging = False
-        self.drag_start_pos = None
-        self.current_route = None
-    
+        print("🎮 Game Loop inicializado - Sistema de estados activo")
+
     def run(self):
-        """Bucle principal con sistema de arrastre"""
+        """Bucle principal con gestión de estados"""
         try:
             self._initialize()
             
             while self.running:
                 self._process_input()
-                self._update_game_state() 
+                self._update_game_state()
                 self._render_frame()
                 
         except Exception as e:
@@ -48,186 +50,336 @@ class GameLoop:
             traceback.print_exc()
         finally:
             self.renderer.cleanup()
-    
+
     def _initialize(self):
-        """Inicializa todos los sistemas"""
+        """Inicializa el juego en estado IDLE"""
         self.renderer.initialize()
         self.current_battle_id = self._create_initial_battle()
         self.running = True
-        print("🎮 Game Loop inicializado")
-        print("🎯 Controles: Click y ARRASTRA para ver rutas, SOLTAR para mover")
-        print("🎯 ESPACIO para terminar turno, R para reiniciar")
-    
+        self.context.reset()
+        print("🚀 Juego inicializado - Selecciona una entidad para comenzar")
+
     def _process_input(self):
-        """Procesa entrada con soporte para drag & drop"""
+        """Procesa input según el estado actual"""
         self.input_service.process_events()
         
-        # Comandos de salida
+        # Comandos globales (siempre disponibles)
         if self.input_service.is_key_pressed("QUIT") or self.input_service.is_key_pressed("ESCAPE"):
             self.running = False
-        
-        # Comandos de juego
-        if self.input_service.is_key_pressed("SPACE"):
-            self._handle_end_turn_command()
         
         if self.input_service.is_key_pressed("RESET"):
             self._handle_reset_command()
         
-        # SISTEMA DE ARRASTRE - NUEVO
-        self._handle_drag_system()
-    
-    def _handle_drag_system(self):
-        """Maneja todo el sistema de arrastre para movimiento"""
-        battle = self.battle_repo.get_by_id(self.current_battle_id)
+        if self.input_service.is_key_pressed("SPACE"):
+            self._handle_end_turn_command()
         
-        # Obtener estado actual del mouse
-        mouse_buttons = pygame.mouse.get_pressed()
+        # Manejo de input por estado
+        state_handlers = {
+            GameState.IDLE: self._handle_input_idle,
+            GameState.ENTITY_SELECTED: self._handle_input_entity_selected,
+            GameState.TRACING_ROUTE: self._handle_input_tracing_route,
+            GameState.TARGETING_ABILITY: self._handle_input_targeting_ability,
+        }
         
-        # Click inicial - seleccionar entidad
-        if self.input_service.is_mouse_clicked() and not self.is_dragging:
-            self._handle_mouse_click_start(battle)
-        
-        # ✅ CAMBIO IMPORTANTE: Usar estado directo del mouse en lugar de eventos
-        if mouse_buttons[0] and self.selected_entity_id:  # Botón izquierdo presionado
-            if not self.is_dragging:
-                self.is_dragging = True
-                print("🖱️  Iniciando arrastre...")
-            self._handle_drag_update(battle)
-        elif self.is_dragging and not mouse_buttons[0]:  # Botón liberado
-            self._handle_drag_end(battle)
-    
-    def _handle_mouse_click_start(self, battle):
-        """Maneja el inicio del click para seleccionar entidad"""
-        grid_pos = self.input_service.get_mouse_grid_position(
-            self.renderer.grid_offset, 
-            self.renderer.cell_size, 
-            self.renderer.grid_size
-        )
-        
-        if not grid_pos:
-            return
+        handler = state_handlers.get(self.context.current_state)
+        if handler:
+            handler()
+
+    def _handle_input_idle(self):
+        """Estado IDLE: Click en entidades del jugador para seleccionar"""
+        if self.input_service.is_mouse_clicked():
+            battle = self.battle_repo.get_by_id(self.current_battle_id)
+            grid_pos = self.input_service.get_mouse_grid_position(
+                self.renderer.grid_offset, 
+                self.renderer.cell_size, 
+                self.renderer.grid_size
+            )
             
-        target_pos = Position(grid_pos[0], grid_pos[1])
-        
-        # Buscar entidad clickeada
-        clicked_entity = self._get_entity_at_position(battle, target_pos)
-        
-        if clicked_entity and clicked_entity.team == "player":
-            # Seleccionar entidad del jugador e iniciar arrastre
-            self.selected_entity_id = clicked_entity.id
-            self.valid_moves = self.turn_service.get_valid_moves(self.current_battle_id, self.selected_entity_id)
-            self.is_dragging = True
-            self.drag_start_pos = clicked_entity.position
-            print(f"🎯 Seleccionado: {clicked_entity.name}")
-            print("🖱️  Arrastra para ver la ruta y embestidas")
-    
-    def _handle_drag_update(self, battle):
-        """Actualiza la ruta en tiempo real durante el arrastre"""
-        grid_pos = self.input_service.get_mouse_grid_position(
-            self.renderer.grid_offset,
-            self.renderer.cell_size, 
-            self.renderer.grid_size
-        )
-        
-        if not grid_pos:
-            self.current_route = None
-            self.renderer.update_route_preview(None, False)
-            return
-            
-        target_pos = Position(grid_pos[0], grid_pos[1])
-        selected_entity = battle.get_entity(self.selected_entity_id)
-        
-        # ✅ EVITAR CALCULAR RUTA SI ES LA MISMA POSICIÓN
-        if selected_entity and selected_entity.position == target_pos:
-            self.current_route = None
-            self.renderer.update_route_preview(None, False)
-            return
-        
-        if selected_entity:
-            try:
-                # Calcular ruta en tiempo real con detección de embestidas
-                self.current_route = self.turn_service.calculate_movement_route(
-                    self.current_battle_id, self.selected_entity_id, target_pos
-                )
-                self.renderer.update_route_preview(self.current_route, True)
+            if not grid_pos:
+                return
                 
-                # Debug info
-                if self.current_route:
-                    print(f"🛣️  Ruta calculada: {len(self.current_route.path)} pasos, Válida: {self.current_route.is_valid}")
-                    if self.current_route.dash_targets:
-                        print(f"⚔️  Embestidas detectadas: {len(self.current_route.dash_targets)} enemigos")
-                else:
-                    print("❌ No se pudo calcular ruta")
-                    
-            except Exception as e:
-                print(f"❌ Error calculando ruta: {e}")
-                self.current_route = None
-                self.renderer.update_route_preview(None, False)
-        else:
-            self.current_route = None
-            self.renderer.update_route_preview(None, False)
-    
-    def _handle_drag_end(self, battle):
-        """Ejecuta el movimiento cuando se suelta el mouse"""
-        if not self.selected_entity_id:
-            self.is_dragging = False
-            return
+            target_pos = Position(grid_pos[0], grid_pos[1])
+            clicked_entity = self._get_entity_at_position(battle, target_pos)
             
+            # Validar que sea entidad del jugador y sea su turno
+            if (clicked_entity and 
+                clicked_entity.team == "player" and 
+                battle.current_turn == "player"):
+                
+                self.context.selected_entity_id = clicked_entity.id
+                self.context.current_state = GameState.ENTITY_SELECTED
+                
+                # Mostrar menú de acciones
+                screen_pos = self._position_to_screen(clicked_entity.position)
+                self.action_menu = ActionMenu(clicked_entity, screen_pos)
+                self.valid_moves = self.turn_service.get_valid_moves(self.current_battle_id, clicked_entity.id)
+                
+                print(f"🎯 {clicked_entity.name} seleccionado")
+                print("📋 Menú de acciones disponible - Elige una acción")
+
+    def _handle_input_entity_selected(self):
+        """Estado ENTITY_SELECTED: Interactuar con menú de acciones"""
+        battle = self.battle_repo.get_by_id(self.current_battle_id)
+        selected_entity = battle.get_entity(self.context.selected_entity_id)
+        
+        if not selected_entity:
+            self._clear_selection()
+            return
+        
+        # Click en el menú de acciones
+        if self.input_service.is_mouse_clicked():
+            mouse_pos = self.input_service.get_mouse_position()
+            selected_action = self.action_menu.handle_click(mouse_pos)
+            
+            if selected_action:
+                self._handle_action_selection(selected_action, selected_entity)
+            else:
+                # Click fuera del menú - deseleccionar
+                self._clear_selection()
+
+    def _handle_input_tracing_route(self):
+        """Estado TRACING_ROUTE: Trazado de ruta con cursor libre"""
+        battle = self.battle_repo.get_by_id(self.current_battle_id)
+        selected_entity = battle.get_entity(self.context.selected_entity_id)
+        
+        if not selected_entity:
+            self._clear_selection()
+            return
+        
+        # Obtener posición actual del cursor en el grid
         grid_pos = self.input_service.get_mouse_grid_position(
             self.renderer.grid_offset,
-            self.renderer.cell_size,
+            self.renderer.cell_size, 
             self.renderer.grid_size
         )
         
         if grid_pos:
-            target_pos = Position(grid_pos[0], grid_pos[1])
+            cursor_pos = Position(grid_pos[0], grid_pos[1])
             
+            # ACTUALIZAR RUTA EN TIEMPO REAL (sin click mantenido)
+            self._update_route_preview(selected_entity, cursor_pos)
+            
+            # Click: marcar embestida o confirmar movimiento
+            if self.input_service.is_mouse_clicked():
+                self._handle_route_click(battle, cursor_pos, selected_entity)
+
+    def _handle_input_targeting_ability(self):
+        """Estado TARGETING_ABILITY: Seleccionar objetivo para habilidad"""
+        battle = self.battle_repo.get_by_id(self.current_battle_id)
+        selected_entity = battle.get_entity(self.context.selected_entity_id)
+
+        if not selected_entity:
+            self._clear_selection()
+            return
+
+        if self.input_service.is_mouse_clicked():
+            grid_pos = self.input_service.get_mouse_grid_position(
+                self.renderer.grid_offset,
+                self.renderer.cell_size,
+                self.renderer.grid_size
+            )
+
+            if not grid_pos:
+                return
+
+            target_pos = Position(grid_pos[0], grid_pos[1])
+            target_entity = self._get_entity_at_position(battle, target_pos)
+
+            # Validar que haya un objetivo
+            if not target_entity:
+                print("❌ Debes seleccionar un objetivo válido")
+                return
+
             try:
-                # Ejecutar movimiento con embestidas automáticas
-                message = self.turn_service.execute_movement_with_dashes(
-                    self.current_battle_id, self.selected_entity_id, target_pos
+                # Ejecutar la habilidad
+                message = self.turn_service.execute_ability(
+                    self.current_battle_id,
+                    self.context.selected_entity_id,
+                    self.context.pending_action,
+                    target_entity.id
                 )
-                print(f"➡️  {message}")
+                print(f"🔮 {message}")
+                self._clear_selection()
                 
             except Exception as e:
-                print(f"❌ Error al mover: {e}")
+                print(f"❌ Error al usar habilidad: {e}")
+
+    def _handle_action_selection(self, action_type: str, entity: BattleEntity):
+        """Procesa selección de acción del menú - ahora con validación de PH"""
+        battle = self.battle_repo.get_by_id(self.current_battle_id)
         
-        # Resetear estado de arrastre
-        self._reset_drag_state()
-    
-    def _reset_drag_state(self):
-        """Resetea todo el estado del sistema de arrastre"""
-        self.is_dragging = False
-        self.drag_start_pos = None
-        self.current_route = None
-        self.renderer.update_route_preview(None, False)
-    
+        if action_type == "move":
+            self.context.current_state = GameState.TRACING_ROUTE
+            self.context.pending_action = "move"
+            self.action_menu.set_visibility(False)
+            print("🛣️ Modo TRAZADO DE RUTA activado")
+            
+        elif action_type in entity.abilities:
+            # Validar PH y cooldown
+            if not entity.can_use_ability(action_type):
+                ability = entity.abilities[action_type]
+                if entity.current_ph < ability.ph_cost:
+                    print(f"❌ PH insuficiente. Necesitas {ability.ph_cost} PH, tienes {entity.current_ph}")
+                elif ability.current_cooldown > 0:
+                    print(f"❌ Habilidad en enfriamiento. TdE: {ability.current_cooldown} turnos")
+                else:
+                    print(f"❌ No puedes usar {ability.name} en este momento")
+                return
+                
+            # Entrar en modo selección de objetivo
+            self.context.current_state = GameState.TARGETING_ABILITY
+            self.context.pending_action = action_type
+            self.action_menu.set_visibility(False)
+            
+            ability = entity.abilities[action_type]
+            print(f"🎯 Modo {ability.name.upper()} - Selecciona un objetivo")
+            
+            # Mostrar objetivos válidos
+            valid_targets = self.turn_service.get_ability_targets(
+                self.current_battle_id, entity.id, action_type
+            )
+            print(f"🎯 Objetivos válidos: {len(valid_targets)}")
+
+    def _update_route_preview(self, entity: BattleEntity, cursor_pos: Position):
+        """Actualiza la previsualización de ruta en tiempo real"""
+        if entity.position == cursor_pos:
+            self.context.current_route = None
+            self.renderer.update_route_preview(None)
+            return
+        
+        try:
+            # Calcular ruta hacia la posición del cursor
+            route = self.turn_service.calculate_movement_route(
+                self.current_battle_id, 
+                self.context.selected_entity_id, 
+                cursor_pos
+            )
+            
+            # Aplicar embestidas marcadas manualmente
+            if route and self.context.marked_dash_targets:
+                # Filtrar dash_targets para incluir solo los marcados manualmente
+                route.dash_targets = [
+                    enemy for enemy in route.dash_targets 
+                    if enemy.id in self.context.marked_dash_targets
+                ]
+            
+            self.context.current_route = route
+            self.renderer.update_route_preview(route)
+            
+        except Exception as e:
+            self.context.current_route = None
+            self.renderer.update_route_preview(None)
+
+    def _handle_route_click(self, battle, click_pos: Position, selected_entity: BattleEntity):
+        """Maneja clicks durante el trazado de ruta"""
+        clicked_entity = self._get_entity_at_position(battle, click_pos)
+        
+        if clicked_entity and clicked_entity.team == "enemy":
+            # MARCAR/DESMARCAR embestida manual
+            if clicked_entity.id in self.context.marked_dash_targets:
+                self.context.marked_dash_targets.remove(clicked_entity.id)
+                print(f"❌ Embestida desmarcada: {clicked_entity.name}")
+            else:
+                self.context.marked_dash_targets.append(clicked_entity.id)
+                print(f"🎯 Embestida marcada: {clicked_entity.name}")
+                
+        else:
+            # CONFIRMAR movimiento
+            try:
+                message = self.turn_service.execute_movement_with_dashes(
+                    self.current_battle_id, 
+                    self.context.selected_entity_id, 
+                    click_pos,
+                    self.context.marked_dash_targets  # Pasar embestidas manuales
+                )
+                print(f"➡️ {message}")
+                
+                # Volver a estado inicial
+                self._clear_selection()
+                
+            except Exception as e:
+                print(f"❌ Error en movimiento: {e}")
+
+    def _execute_basic_attack(self, attacker, target_entity, battle):
+        """Ejecuta ataque básico"""
+        if not target_entity or target_entity.team != "enemy":
+            print("❌ Objetivo no válido para ataque")
+            return
+
+        # Validar que no haya usado ataque este turno
+        if not self.context.can_perform_action("basic_attack", attacker):
+            print("❌ Ya usaste el ataque básico este turno")
+            return
+
+        # Calcular daño (placeholder - luego integraremos DamageCalculationService)
+        damage = 25  # Placeholder
+        events = target_entity.take_damage(damage)
+        
+        # Marcar acción como usada
+        attacker.mark_action_used("basic_attack")
+        
+        # Consumir acción del turno
+        battle.consume_player_action()
+        self.battle_repo.save(battle)
+        
+        print(f"⚔️ {attacker.name} ataca a {target_entity.name} por {damage} de daño")
+        self._clear_selection()
+
+    def _execute_ability(self, caster, target_entity, battle):
+        """Ejecuta habilidad (placeholder - PH/TdE vendrá después)"""
+        ability_type = self.context.pending_action
+        
+        # Validar que no haya usado esta habilidad este turno
+        if not self.context.can_perform_action(ability_type, caster):
+            print(f"❌ Ya usaste {ability_type} este turno")
+            return
+
+        # Placeholder - luego integraremos sistema de habilidades
+        print(f"🔮 {caster.name} usa {ability_type} en {target_entity.name if target_entity else 'posición'}")
+        
+        # Marcar acción como usada
+        caster.mark_action_used(ability_type)
+        
+        # Consumir acción del turno
+        battle.consume_player_action()
+        self.battle_repo.save(battle)
+        
+        self._clear_selection()
+
+    def _clear_selection(self):
+        """Limpia toda la selección y vuelve al estado IDLE"""
+        self.context.reset()
+        self.action_menu = None
+        self.valid_moves = []
+        print("🧹 Selección limpiada")
+
     def _update_game_state(self):
         """Actualiza estado del juego"""
         # Por ahora vacío, la lógica está en los servicios
         pass
-    
+
     def _render_frame(self):
-        """Renderiza el frame con rutas dinámicas"""
+        """Renderiza el frame con el contexto actual"""
         battle = self.battle_repo.get_by_id(self.current_battle_id)
-        self.renderer.render_battle(battle, self.selected_entity_id, self.valid_moves)
-    
+        
+        # Pasar el contexto al renderizador
+        self.renderer.set_action_menu(self.action_menu)
+        self.renderer.render_battle(battle, self.context, self.valid_moves)
+
     def _create_initial_battle(self):
-        """Crea batalla inicial"""
+        """Crea batalla inicial CON SISTEMA DE HABILIDADES"""
         battle_id = uuid4()
         battle = Battle(battle_id, mode="arcade", grid_size=(8, 8))
         
-        # Crear jugador
         player = BattleEntity(
             entity_id=EntityId.generate(),
             position=Position(1, 1),
-            stats=EntityStats(100, 100, 50, 50, 25, 15, 10),
+            stats=EntityStats(100, 100, 50, 50, 25, 15, 10),  
             team="player",
             name="Ricchard",
-            character_class="Daño"
+            character_class="Daño"  
         )
         
-        # Crear enemigo
         enemy = BattleEntity(
             entity_id=EntityId.generate(),
             position=Position(6, 6),
@@ -248,7 +400,7 @@ class GameLoop:
         self.battle_repo.save(battle)
         print(f"✔️ Batalla creada: {player.name} vs {enemy.name}")
         return battle_id
-    
+
     def _get_entity_at_position(self, battle, position):
         """Busca entidad en posición"""
         for entity in battle._entities.values():
@@ -265,58 +417,19 @@ class GameLoop:
                 print(f"📢 {type(event).__name__}")
             
             # Limpiar estado
-            self.selected_entity_id = None
-            self.valid_moves = []
-            self._reset_drag_state()
+            self._clear_selection()
             
         except Exception as e:
             print(f"❌ Error al terminar turno: {e}")
-    
+
     def _handle_reset_command(self):
         """Reinicia la batalla"""
         self.current_battle_id = self._create_initial_battle()
-        self.selected_entity_id = None
-        self.valid_moves = []
-        self._reset_drag_state()
+        self._clear_selection()
         print("🔄 Batalla reiniciada")
 
-    def _handle_drag_update(self, battle):
-        """Actualiza la ruta en tiempo real durante el arrastre"""
-        grid_pos = self.input_service.get_mouse_grid_position(
-            self.renderer.grid_offset,
-            self.renderer.cell_size, 
-            self.renderer.grid_size
-        )
-        
-        if not grid_pos:
-            self.current_route = None
-            self.renderer.update_route_preview(None, False)
-            return
-            
-        target_pos = Position(grid_pos[0], grid_pos[1])
-        selected_entity = battle.get_entity(self.selected_entity_id)
-        
-        if not selected_entity:
-            self.current_route = None
-            self.renderer.update_route_preview(None, False)
-            return
-        
-        # Evitar calcular ruta si es la misma posición
-        if selected_entity.position == target_pos:
-            self.current_route = None
-            self.renderer.update_route_preview(None, False)
-            return
-        
-        try:
-            # Calcular ruta en tiempo real con detección de embestidas
-            self.current_route = self.turn_service.calculate_movement_route(
-                self.current_battle_id, self.selected_entity_id, target_pos
-            )
-            self.renderer.update_route_preview(self.current_route, True)
-                
-        except Exception as e:
-            # Solo mostrar errores reales, no los de "misma posición"
-            if "misma posición" not in str(e):
-                print(f"❌ Error calculando ruta: {e}")
-            self.current_route = None
-            self.renderer.update_route_preview(None, False)
+    def _position_to_screen(self, position: Position) -> tuple:
+        """Convierte posición del grid a coordenadas de pantalla"""
+        x = self.renderer.grid_offset[0] + position.x * self.renderer.cell_size
+        y = self.renderer.grid_offset[1] + position.y * self.renderer.cell_size
+        return (x, y)

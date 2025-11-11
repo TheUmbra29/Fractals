@@ -1,63 +1,60 @@
-"""
-LIMPIEZA DE ARCHIVOS CONFLICTIVOS
-"""
+import sys
 import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
 
-def remove_conflicting_files():
-    files_to_remove = [
-        # Archivos viejos de UI
-        "infrastructure/ui/pygame_rendering_adapter.py",
-        "infrastructure/ui/pygame_input_adapter.py",
-        
-        # Archivos temporales de pruebas
-        "main_final.py",
-        "minimal_working.py", 
-        "simple_test.py",
-        "fix_imports.py",
-        "fix_all_imports.py",
-        "cleanup.py",
-        "cleanup_final.py",
-        "cleanup_conflicts.py",  # Este mismo se elimina
-    ]
+try:
+    from core.domain.entities.value_objects.entity_id import EntityId
+    from core.domain.entities.value_objects.position import Position
+    from core.domain.entities.value_objects.stats import EntityStats
+    from core.domain.entities.battle_entity import BattleEntity
     
-    removed_count = 0
-    for file_path in files_to_remove:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            print(f"🗑️ Eliminado: {file_path}")
-            removed_count += 1
+    print("✅ VERIFICANDO MOVIMIENTO:")
     
-    # Crear __init__.py necesarios
-    init_files = {
-        "infrastructure/ui/__init__.py": '''from .input_service import InputService
-from .rendering_service import RenderingService
-from .game_loop import GameLoop
-
-__all__ = [
-    "InputService",
-    "RenderingService", 
-    "GameLoop"
-]
-''',
-        "core/application/services/__init__.py": '''from .turn_service import TurnService
-
-__all__ = [
-    "TurnService"
-]
-'''
-    }
+    # Crear dos entidades de prueba
+    entity1 = BattleEntity(
+        entity_id=EntityId.generate(),
+        position=Position(1, 1),
+        stats=EntityStats(100, 100, 50, 50, 25, 15, 10),
+        team="player",
+        name="Ricchard",
+        character_class="Daño"
+    )
     
-    created_count = 0
-    for file_path, content in init_files.items():
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(content)
-        print(f"📁 Creado: {file_path}")
-        created_count += 1
+    entity2 = BattleEntity(
+        entity_id=EntityId.generate(),
+        position=Position(3, 3),
+        stats=EntityStats(80, 80, 30, 30, 20, 10, 8),
+        team="enemy",
+        name="Enemy Bot",
+        character_class="Daño"
+    )
     
-    print(f"\n🎯 {removed_count} archivos eliminados, {created_count} archivos creados")
-    print("✅ Conflicto de imports resuelto")
-    print("🚀 Ejecuta: python main.py")
-
-if __name__ == "__main__":
-    remove_conflicting_files()
+    # Verificar movimiento
+    print(f"  Posición inicial: {entity1.position}")
+    entity1.move_to(Position(2, 2))
+    print(f"  Posición después de mover: {entity1.position}")
+    print(f"  ✅ move_to funciona")
+    
+    # Verificar que no puede moverse dos veces
+    try:
+        entity1.move_to(Position(3, 3))
+        print("  ❌ Debería fallar al mover dos veces")
+    except ValueError as e:
+        print(f"  ✅ move_to valida correctamente: {e}")
+    
+    # Verificar embestida
+    events = entity1.execute_dash_attack(entity2)
+    print(f"  ✅ execute_dash_attack funciona: {len(events)} eventos generados")
+    
+    # Verificar daño
+    events = entity2.take_damage(20)
+    print(f"  ✅ take_damage funciona: {len(events)} eventos generados")
+    print(f"  HP después de daño: {entity2.stats.current_hp}")
+    
+    print("🎉 ¡Todos los métodos de movimiento funcionan!")
+    
+except Exception as e:
+    print(f"❌ Error: {e}")
+    import traceback
+    traceback.print_exc()
