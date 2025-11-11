@@ -34,7 +34,7 @@ class EnhancedRenderingService(RenderingService):
         # Renderizar entidades con marcado especial para embestidas
         for entity in battle._entities.values():
             is_selected = entity.id == game_context.selected_entity_id
-            is_marked_for_dash = entity.id in game_context.marked_dash_targets
+            is_marked_for_dash = entity.position in getattr(game_context, 'dash_anchors', [])
             self._render_entity(entity, is_selected, is_marked_for_dash)
         
         # Renderizar ruta de movimiento si estamos en modo trazado
@@ -48,7 +48,7 @@ class EnhancedRenderingService(RenderingService):
                     game_context.current_route, 
                     selected_entity.position, 
                     is_dragging=False,
-                    marked_dash_targets=game_context.marked_dash_targets
+                    dash_anchors=getattr(game_context, 'dash_anchors', [])
                 )
         
         # Renderizar menú de acciones si hay entidad seleccionada
@@ -129,9 +129,8 @@ class EnhancedRenderingService(RenderingService):
         
         # Información adicional para modo trazado
         if (game_context.current_state == GameState.TRACING_ROUTE and 
-            game_context.marked_dash_targets):
-            
-            dash_info = f"Embestidas marcadas: {len(game_context.marked_dash_targets)}"
+            getattr(game_context, 'dash_anchors', [])):
+            dash_info = f"Embestidas marcadas: {len(game_context.dash_anchors)}"
             dash_surface = self.font.render(dash_info, True, (255, 200, 200))
             self.screen.blit(dash_surface, (300, self.screen_height - 40))
 

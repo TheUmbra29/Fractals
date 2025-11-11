@@ -18,21 +18,31 @@ class GameContext:
     current_state: GameState = GameState.IDLE
     selected_entity_id: Optional[EntityId] = None
     current_route: Optional[List[Position]] = None
-    marked_dash_targets: List[EntityId] = None
+    dash_anchors: List[Position] = None  # ✅ NUEVO: Puntos de anclaje para embestidas
+    current_destination: Optional[Position] = None  # ✅ NUEVO: Destino actual del cursor
     pending_action: Optional[str] = None  # "move", "attack", "ability_alpha", etc.
-    
+
     def __post_init__(self):
-        if self.marked_dash_targets is None:
-            self.marked_dash_targets = []
-    
+        if self.dash_anchors is None:
+            self.dash_anchors = []
+
     def reset(self):
         """Resetea el contexto al estado inicial"""
         self.current_state = GameState.IDLE
         self.selected_entity_id = None
         self.current_route = None
-        self.marked_dash_targets.clear()
+        self.dash_anchors.clear()
+        self.current_destination = None
         self.pending_action = None
-    
+
+    def get_full_route_points(self) -> List[Position]:
+        """Obtiene todos los puntos de la ruta completa: inicio + anclajes + destino"""
+        points = []
+        if self.selected_entity_id and self.dash_anchors:
+            # Esto se calculará dinámicamente en el GameLoop
+            pass
+        return points
+
     def can_perform_action(self, action_type: str, entity) -> bool:
         """Verifica si una acción puede realizarse según tu GDD"""
         return action_type not in entity.actions_used_this_turn

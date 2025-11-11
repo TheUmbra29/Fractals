@@ -25,32 +25,34 @@ class MovementVisualizer:
 
     def render_route(self, screen: pygame.Surface, route: Optional[MovementRoute], 
                     current_position: Position, is_dragging: bool = False,
-                    marked_dash_targets: List[EntityId] = None) -> None:
-        """Renderiza una ruta completa con conexiones de embestidas"""
+                    dash_anchors: List[Position] = None) -> None:
+        """Renderiza ruta con puntos de anclaje especiales"""
         if not route or not route.path:
             return
-            
-        if marked_dash_targets is None:
-            marked_dash_targets = []
-            
+        
+        if dash_anchors is None:
+            dash_anchors = []
+        
         route_color = self.colors["valid_route"] if route.is_valid else self.colors["invalid_route"]
         
-        # Renderizar línea de ruta
+        # 1. Renderizar línea de ruta principal
         self._render_route_line(screen, current_position, route.path, route_color)
         
-        # Renderizar nodos del camino
-        self._render_path_nodes(screen, route.path)
-        
-        # ✅ NUEVO: Renderizar conexiones de embestidas
-        if route.dash_targets:
-            self._render_dash_connections(screen, route.dash_targets, route.path, route_color)
-        
-        # Renderizar enemigos para embestida
-        self._render_dash_targets(screen, route.dash_targets, marked_dash_targets, route_color)
-        
-        # Renderizar información de daño
-        if route.dash_targets:
-            self._render_dash_damage_info(screen, route, marked_dash_targets)
+        # 2. Renderizar puntos de anclaje con numeración
+        for i, anchor_pos in enumerate(dash_anchors):
+            anchor_screen = self._position_to_screen(anchor_pos)
+            
+            # Círculo especial para anclajes
+            pygame.draw.circle(screen, (255, 0, 0), anchor_screen, 12, 3)
+            
+            # Número de anclaje
+            font = pygame.font.Font(None, 18)
+            text = font.render(str(i+1), True, (255, 255, 255))
+            text_rect = text.get_rect(center=anchor_screen)
+            screen.blit(text, text_rect)
+            
+            # Icono de espada en anclajes
+            self._render_sword_icon(screen, anchor_screen, is_anchor=True)
 
     def _render_route_line(self, screen: pygame.Surface, start_pos: Position, 
                           path: List[Position], color: tuple) -> None:
@@ -159,21 +161,25 @@ class MovementVisualizer:
         damage_surface = font.render(damage_text, True, (255, 255, 255))
         screen.blit(damage_surface, (info_x, info_y + 45))
 
-    def _render_sword_icon(self, screen: pygame.Surface, position: tuple, is_marked: bool = False):
-        """Renderiza icono de espada (más grande si está marcado)"""
+    def _render_sword_icon(self, screen: pygame.Surface, position: tuple, is_anchor: bool = False):
+        """Renderiza icono de espada (especial para anclajes)"""
         x, y = position
-        size_multiplier = 1.5 if is_marked else 1.0
+        size = 1.8 if is_anchor else 1.0  # Más grande para anclajes
         
-        # Dibujar espada simple (triángulo)
+        # Espada más detallada para anclajes
         points = [
-            (x, y - 8 * size_multiplier),                    # Punta
-            (x - 4 * size_multiplier, y + 4 * size_multiplier),  # Base izquierda  
-            (x + 4 * size_multiplier, y + 4 * size_multiplier)   # Base derecha
+            (x, y - 10 * size),                    # Punta
+            (x - 3 * size, y - 3 * size),          # Guarda izquierda
+            (x - 5 * size, y + 5 * size),          # Base izquierda  
+            (x - 2 * size, y + 6 * size),          # Empuñadura izquierda
+            (x + 2 * size, y + 6 * size),          # Empuñadura derecha
+            (x + 5 * size, y + 5 * size),          # Base derecha
+            (x + 3 * size, y - 3 * size),          # Guarda derecha
         ]
         
-        color = (255, 255, 255) if is_marked else (200, 200, 200)
+        color = (255, 255, 0) if is_anchor else (255, 255, 255)  # Amarillo para anclajes
         pygame.draw.polygon(screen, color, points)
-        pygame.draw.polygon(screen, (150, 150, 150), points, 1)
+        pygame.draw.polygon(screen, (200, 200, 0), points, 1)
 
     def _position_to_screen(self, position: Position) -> tuple:
         """Convierte posición del grid a coordenadas de pantalla"""

@@ -1,24 +1,27 @@
 """
-GAME LOOP COMPLETO - Con sistema de estados y menú contextual
+GAME LOOP ACTUALIZADO - Sistema de embestidas como puntos de anclaje
 """
 import pygame
 from uuid import uuid4
 
 from core.domain.entities.aggregates.battle import Battle
-from core.domain.entities.value_objects.game_enums import Team, CharacterClass
 from core.domain.entities.battle_entity import BattleEntity
 from core.domain.entities.value_objects.entity_id import EntityId
 from core.domain.entities.value_objects.position import Position
 from core.domain.entities.value_objects.stats import EntityStats
+from core.domain.entities.value_objects.game_enums import Team, CharacterClass
 
 from .input_service import InputService
 from .enhanced_rendering_service import EnhancedRenderingService
 from .game_states import GameState, GameContext
 from .action_menu import ActionMenu
+from typing import List
 
 class GameLoop:
-    """Game Loop completo con sistema de estados y menú contextual"""
-
+    def _handle_input_targeting_ability(self):
+        pass
+    """Coordina el flujo del juego con sistema de anclajes para embestidas"""
+    
     def __init__(self, battle_repository, turn_service):
         self.battle_repo = battle_repository
         self.turn_service = turn_service
@@ -28,13 +31,15 @@ class GameLoop:
         self.current_battle_id = None
         self.running = False
         
-        # Contexto del juego y menú
+        # Contexto del juego con sistema de anclajes
         self.context = GameContext()
         self.action_menu = None
         self.valid_moves = []
         
-        print("🎮 Game Loop inicializado - Sistema de estados activo")
-
+        self.last_cursor_pos = None  # Última posición del cursor para trazado
+        
+        print("🎮 Game Loop inicializado - Sistema de anclajes activo")
+    
     def run(self):
         """Bucle principal con gestión de estados"""
         try:
@@ -51,7 +56,7 @@ class GameLoop:
             traceback.print_exc()
         finally:
             self.renderer.cleanup()
-
+    
     def _initialize(self):
         """Inicializa el juego en estado IDLE"""
         self.renderer.initialize()
@@ -59,7 +64,8 @@ class GameLoop:
         self.running = True
         self.context.reset()
         print("🚀 Juego inicializado - Selecciona una entidad para comenzar")
-
+        print("🎯 Nuevo sistema: Click en enemigos durante trazado para añadir puntos de embestida")
+    
     def _process_input(self):
         """Procesa input según el estado actual"""
         self.input_service.process_events()
@@ -85,7 +91,7 @@ class GameLoop:
         handler = state_handlers.get(self.context.current_state)
         if handler:
             handler()
-
+    
     def _handle_input_idle(self):
         """Estado IDLE: Click en entidades del jugador para seleccionar"""
         if self.input_service.is_mouse_clicked():
@@ -95,22 +101,30 @@ class GameLoop:
                 self.renderer.cell_size, 
                 self.renderer.grid_size
             )
+            
             if not grid_pos:
                 return
+                
             target_pos = Position(grid_pos[0], grid_pos[1])
+            cursor_pos = target_pos  # Definir cursor_pos correctamente
             clicked_entity = self._get_entity_at_position(battle, target_pos)
-            # ✅ ACTUALIZADO: Usar Team enum en lugar de strings
+
+            # Validar que sea entidad del jugador y sea su turno
             if (clicked_entity and 
                 clicked_entity.team == Team.PLAYER and 
                 battle.current_turn == Team.PLAYER):
+                self.last_cursor_pos = cursor_pos  # Actualizar última posición del cursor
+
                 self.context.selected_entity_id = clicked_entity.id
                 self.context.current_state = GameState.ENTITY_SELECTED
+
                 # Mostrar menú de acciones
                 screen_pos = self._position_to_screen(clicked_entity.position)
                 self.action_menu = ActionMenu(clicked_entity, screen_pos)
+
                 print(f"🎯 {clicked_entity.name} seleccionado")
                 print("📋 Menú de acciones disponible - Elige una acción")
-
+    
     def _handle_input_entity_selected(self):
         """Estado ENTITY_SELECTED: Interactuar con menú de acciones"""
         battle = self.battle_repo.get_by_id(self.current_battle_id)
@@ -119,12 +133,6 @@ class GameLoop:
         if not selected_entity:
             self._clear_selection()
             return
-        
-        # ✅ SOLO calcular movimientos válidos si NO estamos en modo trazado
-        if self.context.current_state == GameState.ENTITY_SELECTED:
-            self.valid_moves = self.turn_service.get_valid_moves(
-                self.current_battle_id, self.context.selected_entity_id
-            )
         
         # Click en el menú de acciones
         if self.input_service.is_mouse_clicked():
@@ -136,9 +144,9 @@ class GameLoop:
             else:
                 # Click fuera del menú - deseleccionar
                 self._clear_selection()
-
+    
     def _handle_input_tracing_route(self):
-        """Estado TRACING_ROUTE: Trazado de ruta con cursor libre"""
+        """Estado TRACING_ROUTE: Trazado de ruta con sistema de anclajes"""
         battle = self.battle_repo.get_by_id(self.current_battle_id)
         selected_entity = battle.get_entity(self.context.selected_entity_id)
         
@@ -155,200 +163,149 @@ class GameLoop:
         
         if grid_pos:
             cursor_pos = Position(grid_pos[0], grid_pos[1])
+            self.last_cursor_pos = cursor_pos  # Actualizar última posición del cursor
             
-            # ACTUALIZAR RUTA EN TIEMPO REAL (sin click mantenido)
-            self._update_route_preview(selected_entity, cursor_pos)
+            # ACTUALIZAR RUTA EN TIEMPO REAL con anclajes actuales
+            self._update_route_preview(selected_entity, cursor_pos, battle)
             
-            # Click: marcar embestida o confirmar movimiento
+            # Click: marcar anclaje de embestida o confirmar movimiento
             if self.input_service.is_mouse_clicked():
                 self._handle_route_click(battle, cursor_pos, selected_entity)
-
-    def _handle_input_targeting_ability(self):
-        """Estado TARGETING_ABILITY: Seleccionar objetivo para habilidad"""
-        battle = self.battle_repo.get_by_id(self.current_battle_id)
-        selected_entity = battle.get_entity(self.context.selected_entity_id)
-
-        if not selected_entity:
-            self._clear_selection()
-            return
-
-        if self.input_service.is_mouse_clicked():
-            grid_pos = self.input_service.get_mouse_grid_position(
-                self.renderer.grid_offset,
-                self.renderer.cell_size,
-                self.renderer.grid_size
-            )
-
-            if not grid_pos:
-                return
-
-            target_pos = Position(grid_pos[0], grid_pos[1])
-            target_entity = self._get_entity_at_position(battle, target_pos)
-
-            # Validar que haya un objetivo
-            if not target_entity:
-                print("❌ Debes seleccionar un objetivo válido")
-                return
-
-            try:
-                # Ejecutar la habilidad
-                message = self.turn_service.execute_ability(
-                    self.current_battle_id,
-                    self.context.selected_entity_id,
-                    self.context.pending_action,
-                    target_entity.id
-                )
-                print(f"🔮 {message}")
-                self._clear_selection()
-                
-            except Exception as e:
-                print(f"❌ Error al usar habilidad: {e}")
-
+    
     def _handle_action_selection(self, action_type: str, entity: BattleEntity):
-        """Procesa selección de acción - LIMPIAR movimientos válidos al entrar en trazado"""
+        """Procesa selección de acción del menú"""
         battle = self.battle_repo.get_by_id(self.current_battle_id)
         
         if action_type == "move":
+            # Entrar en modo trazado de ruta
             self.context.current_state = GameState.TRACING_ROUTE
             self.context.pending_action = "move"
             self.action_menu.set_visibility(False)
             
-            # ✅ LIMPIAR movimientos válidos para que no se muestre el rango azul
+            # Limpiar movimientos válidos para que no se muestre el rango azul
             self.valid_moves = []
             
             print("🛣️ Modo TRAZADO DE RUTA activado")
-            print("💡 Mueve el cursor para ver la ruta - Click en enemigos para embestida")
-
-    def _update_route_preview(self, entity: BattleEntity, cursor_pos: Position):
-        """Actualiza la previsualización de ruta en tiempo real"""
-        if entity.position == cursor_pos:
-            self.context.current_route = None
-            self.renderer.update_route_preview(None)
-            return
+            print("💡 Mueve el cursor para ver la ruta")
+            print("🎯 Click en enemigos para añadir puntos de embestida")
+            print("💡 Click en casilla vacía para confirmar movimiento")
+            
+        elif action_type == "basic_attack":
+            # Preparar ataque básico
+            self.context.current_state = GameState.TARGETING_ABILITY
+            self.context.pending_action = "basic_attack"
+            self.action_menu.set_visibility(False)
+            
+            print("🎯 Modo ATAQUE - Selecciona objetivo")
+            
+        elif action_type.startswith("ability_"):
+            # Preparar habilidad
+            self.context.current_state = GameState.TARGETING_ABILITY  
+            self.context.pending_action = action_type
+            self.action_menu.set_visibility(False)
+            
+            print(f"🔮 Modo {action_type.upper()} - Selecciona objetivo")
+    
+    def _update_route_preview(self, entity: BattleEntity, destination: Position, battle: Battle):
+        """Actualiza la previsualización de ruta con anclajes actuales"""
         
         try:
-            # Calcular ruta hacia la posición del cursor
-            route = self.turn_service.calculate_movement_route(
-                self.current_battle_id, 
-                self.context.selected_entity_id, 
-                cursor_pos
+            # Calcular ruta que pasa por todos los anclajes
+            route = self.turn_service.calculate_route_with_anchors(
+                self.current_battle_id,
+                self.context.selected_entity_id,
+                destination,
+                self.context.dash_anchors
             )
-            
-            # Aplicar embestidas marcadas manualmente
-            if route and self.context.marked_dash_targets:
-                # Filtrar dash_targets para incluir solo los marcados manualmente
-                route.dash_targets = [
-                    enemy for enemy in route.dash_targets 
-                    if enemy.id in self.context.marked_dash_targets
-                ]
-            
+            # Si la ruta está vacía pero el destino es válido, mostrar al menos el punto actual
+            if not route or not route.path:
+                route = type(route)([entity.position], [], True)
             self.context.current_route = route
-            self.renderer.update_route_preview(route)
-            
+            self.renderer.update_route_preview(self.context.current_route)
         except Exception as e:
+            print(f"❌ Error calculando ruta: {e}")
             self.context.current_route = None
             self.renderer.update_route_preview(None)
-
+    
     def _handle_route_click(self, battle, click_pos: Position, selected_entity: BattleEntity):
-        """Maneja clicks durante el trazado de ruta"""
+        """Maneja clicks durante el trazado de ruta - SISTEMA DE ANCLAJES"""
         clicked_entity = self._get_entity_at_position(battle, click_pos)
         
         if clicked_entity and clicked_entity.team == Team.ENEMY:
-            # MARCAR/DESMARCAR embestida manual
-            if clicked_entity.id in self.context.marked_dash_targets:
-                self.context.marked_dash_targets.remove(clicked_entity.id)
+            # MARCAR/DESMARCAR punto de anclaje para embestida
+            enemy_pos = clicked_entity.position
+            ruta_actualizada = False
+            if enemy_pos in self.context.dash_anchors:
+                # Desmarcar anclaje
+                self.context.dash_anchors.remove(enemy_pos)
                 print(f"❌ Embestida desmarcada: {clicked_entity.name}")
+                ruta_actualizada = True
             else:
-                self.context.marked_dash_targets.append(clicked_entity.id)
-                print(f"🎯 Embestida marcada: {clicked_entity.name}")
-                
+                # Marcar anclaje - verificar que no sea el mismo enemigo
+                anchored_enemies = self._get_anchored_enemies(battle)
+                if clicked_entity.id not in [e.id for e in anchored_enemies]:
+                    self.context.dash_anchors.append(enemy_pos)
+                    print(f"🎯 Embestida marcada: {clicked_entity.name} (Anclaje #{len(self.context.dash_anchors)})")
+                    # Mostrar información de anclajes actuales
+                    if len(self.context.dash_anchors) > 0:
+                        print(f"📌 Anclajes activos: {len(self.context.dash_anchors)}")
+                    ruta_actualizada = True
+                else:
+                    print(f"⚠️ Ya has marcado a {clicked_entity.name} para embestida")
+            # Forzar actualización de la ruta para evitar que desaparezca
+            if ruta_actualizada:
+                self._update_route_preview(selected_entity, click_pos, battle)
+            
         else:
-            # CONFIRMAR movimiento
+            # CONFIRMAR movimiento final con anclajes
             try:
-                message = self.turn_service.execute_movement_with_dashes(
+                message = self.turn_service.execute_movement_with_dash_anchors(
                     self.current_battle_id, 
-                    self.context.selected_entity_id, 
+                    self.context.selected_entity_id,
                     click_pos,
-                    self.context.marked_dash_targets  # Pasar embestidas manuales
+                    self.context.dash_anchors
                 )
                 print(f"➡️ {message}")
-                
-                # Volver a estado inicial
                 self._clear_selection()
                 
             except Exception as e:
                 print(f"❌ Error en movimiento: {e}")
-
-    def _execute_basic_attack(self, attacker, target_entity, battle):
-        """Ejecuta ataque básico"""
-        if not target_entity or target_entity.team != Team.ENEMY:
-            print("❌ Objetivo no válido para ataque")
-            return
-
-        # Validar que no haya usado ataque este turno
-        if not self.context.can_perform_action("basic_attack", attacker):
-            print("❌ Ya usaste el ataque básico este turno")
-            return
-
-        # Calcular daño (placeholder - luego integraremos DamageCalculationService)
-        damage = 25  # Placeholder
-        events = target_entity.take_damage(damage)
-        
-        # Marcar acción como usada
-        attacker.mark_action_used("basic_attack")
-        
-        # Consumir acción del turno
-        battle.consume_player_action()
-        self.battle_repo.save(battle)
-        
-        print(f"⚔️ {attacker.name} ataca a {target_entity.name} por {damage} de daño")
-        self._clear_selection()
-
-    def _execute_ability(self, caster, target_entity, battle):
-        """Ejecuta habilidad (placeholder - PH/TdE vendrá después)"""
-        ability_type = self.context.pending_action
-        
-        # Validar que no haya usado esta habilidad este turno
-        if not self.context.can_perform_action(ability_type, caster):
-            print(f"❌ Ya usaste {ability_type} este turno")
-            return
-
-        # Placeholder - luego integraremos sistema de habilidades
-        print(f"🔮 {caster.name} usa {ability_type} en {target_entity.name if target_entity else 'posición'}")
-        
-        # Marcar acción como usada
-        caster.mark_action_used(ability_type)
-        
-        # Consumir acción del turno
-        battle.consume_player_action()
-        self.battle_repo.save(battle)
-        
-        self._clear_selection()
-
+    
+    def _get_anchored_enemies(self, battle) -> List[BattleEntity]:
+        """Obtiene las entidades enemigas en las posiciones de anclaje"""
+        anchored_enemies = []
+        for anchor_pos in self.context.dash_anchors:
+            enemy = battle.get_entity_at_position(anchor_pos)
+            if enemy:
+                anchored_enemies.append(enemy)
+        return anchored_enemies
+    
     def _clear_selection(self):
         """Limpia toda la selección y vuelve al estado IDLE"""
         self.context.reset()
         self.action_menu = None
         self.valid_moves = []
         print("🧹 Selección limpiada")
-
+    
     def _update_game_state(self):
         """Actualiza estado del juego"""
         # Por ahora vacío, la lógica está en los servicios
         pass
-
+    
     def _render_frame(self):
-        """Renderiza el frame con el contexto actual"""
+        """Renderiza el frame con rutas y anclajes"""
         battle = self.battle_repo.get_by_id(self.current_battle_id)
         
         # Pasar el contexto al renderizador
         self.renderer.set_action_menu(self.action_menu)
         self.renderer.render_battle(battle, self.context, self.valid_moves)
-
+    
     def _create_initial_battle(self):
         """Crea batalla inicial usando enums"""
         battle_id = uuid4()
         battle = Battle(battle_id, mode="arcade", grid_size=(8, 8))
+        
+        # Crear jugador
         player = BattleEntity(
             entity_id=EntityId.generate(),
             position=Position(1, 1),
@@ -357,31 +314,52 @@ class GameLoop:
             name="Ricchard",
             character_class=CharacterClass.DAMAGE
         )
-        enemy = BattleEntity(
+        
+        # Crear enemigos
+        enemy1 = BattleEntity(
             entity_id=EntityId.generate(),
             position=Position(6, 6),
             stats=EntityStats(80, 80, 30, 30, 20, 10, 8),
             team=Team.ENEMY,
-            name="Enemy Bot",
+            name="Enemy Bot 1",
             character_class=CharacterClass.DAMAGE
         )
+        
+        enemy2 = BattleEntity(
+            entity_id=EntityId.generate(),
+            position=Position(4, 4),
+            stats=EntityStats(70, 70, 25, 25, 18, 8, 6),
+            team=Team.ENEMY,
+            name="Enemy Bot 2",
+            character_class=CharacterClass.DAMAGE
+        )
+        
         # Añadir obstáculos desde configuración
         from core.domain.config.game_config import GAME_CONFIG
         for obstacle_pos in GAME_CONFIG.INITIAL_OBSTACLES:
             battle.add_obstacle(Position(obstacle_pos[0], obstacle_pos[1]))
+        
         battle.add_entity(player)
-        battle.add_entity(enemy)
+        battle.add_entity(enemy1)
+        battle.add_entity(enemy2)
+        
         self.battle_repo.save(battle)
-        print(f"✔️ Batalla creada: {player.name} vs {enemy.name}")
+        print(f"✔️ Batalla creada: {player.name} vs {enemy1.name} y {enemy2.name}")
         return battle_id
-
+    
     def _get_entity_at_position(self, battle, position):
         """Busca entidad en posición"""
-        for entity in battle._entities.values():
+        for entity in battle.get_entities():
             if entity.position == position:
                 return entity
         return None
-
+    
+    def _position_to_screen(self, position: Position) -> tuple:
+        """Convierte posición del grid a coordenadas de pantalla"""
+        x = self.renderer.grid_offset[0] + position.x * self.renderer.cell_size
+        y = self.renderer.grid_offset[1] + position.y * self.renderer.cell_size
+        return (x, y)
+    
     def _handle_end_turn_command(self):
         """Termina el turno y limpia estado"""
         try:
@@ -395,15 +373,9 @@ class GameLoop:
             
         except Exception as e:
             print(f"❌ Error al terminar turno: {e}")
-
+    
     def _handle_reset_command(self):
         """Reinicia la batalla"""
         self.current_battle_id = self._create_initial_battle()
         self._clear_selection()
         print("🔄 Batalla reiniciada")
-
-    def _position_to_screen(self, position: Position) -> tuple:
-        """Convierte posición del grid a coordenadas de pantalla"""
-        x = self.renderer.grid_offset[0] + position.x * self.renderer.cell_size
-        y = self.renderer.grid_offset[1] + position.y * self.renderer.cell_size
-        return (x, y)

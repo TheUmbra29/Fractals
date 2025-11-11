@@ -6,6 +6,7 @@ from ..entities.value_objects.position import Position
 from ..entities.value_objects.entity_id import EntityId
 from ..entities.value_objects.game_enums import Team
 from .route_system import RouteSystem, MovementRoute
+from ..entities.aggregates.battle import Battle
 
 class TurnService:
     """Maneja la lógica de turnos"""
@@ -214,3 +215,56 @@ class TurnService:
                         targets.append(entity.id)
         
         return targets
+
+    def calculate_route_with_anchors(self, battle_id, entity_id, destination: Position, anchors: List[Position]) -> MovementRoute:
+        """Calcula ruta que pasa por puntos de anclaje"""
+        battle = self.battle_repo.get_by_id(battle_id)
+        entity = battle.get_entity(entity_id)
+        start_pos = entity.position
+        return RouteSystem.calculate_route_with_anchors(
+            start_pos, destination, anchors, battle, entity
+        )
+
+    def execute_movement_with_dash_anchors(self, battle_id, entity_id, final_destination: Position,
+                                         anchors: List[Position]) -> str:
+        """Ejecuta movimiento pasando por puntos de anclaje para embestidas"""
+        battle = self.battle_repo.get_by_id(battle_id)
+        entity = battle.get_entity(entity_id)
+        # Validaciones básicas
+        if not entity or entity.team != Team.PLAYER or battle.current_turn != Team.PLAYER or entity.has_moved:
+            raise ValueError("Movimiento no válido")
+        # Calcular ruta final (movimiento REAL, is_preview=False)
+        from .route_system import RouteSystem
+        start_pos = entity.position
+        route = RouteSystem.calculate_route_with_anchors(
+            start_pos, final_destination, anchors, battle, entity  # is_preview=False por defecto
+        )
+        if not route.is_valid or not route.path:
+            raise ValueError("No hay ruta válida")
+        # Mover entidad a la posición final
+        entity.move_to(final_destination)
+        # Ejecutar embestidas en los puntos de anclaje
+        dash_results = []
+        for enemy in route.dash_targets:
+            try:
+                events = entity.execute_dash_attack(enemy)
+                dash_results.append({
+                    "enemy": enemy.name,
+                    "success": True
+                })
+            except Exception as e:
+                dash_results.append({
+                    "enemy": enemy.name,
+                    "error": str(e),
+                    "success": False
+                })
+        # Consumir acción
+        battle.consume_player_action()
+        self.battle_repo.save(battle)
+        # Mensaje de resultado
+        successful_dashes = [r for r in dash_results if r["success"]]
+        if successful_dashes:
+            enemies_list = ", ".join([r["enemy"] for r in successful_dashes])
+            return f"{entity.name} se movió y embistió a: {enemies_list}"
+        else:
+            return f"{entity.name} se movió a {final_destination}"

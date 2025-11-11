@@ -15,53 +15,47 @@ class MovementRoute:
         self.dash_damage = len(dash_targets) * 15  # 15 daño fijo por embestida
 
 class RouteSystem:
-    """Sistema que calcula rutas y detecta embestidas automáticamente"""
-    
+    """Sistema simplificado para rutas con puntos de anclaje"""
+
     @staticmethod
-    def calculate_route(start: Position, end: Position, battle: Battle, moving_entity: BattleEntity) -> MovementRoute:
-        """Calcula ruta y detecta enemigos en el camino para embestidas"""
-        
-        # Calcular ruta con A*
-        path = PathfindingService.find_path(
-            start, end,
-            battle._obstacles,
-            list(battle._entities.values()),
-            moving_entity
-        )
-        
-        if not path:
-            return MovementRoute([], [], False)
-            
-        # Detectar enemigos para embestidas a lo largo de la ruta
-        dash_targets = RouteSystem._find_dash_targets_along_route(path, battle, moving_entity)
-        
-        # Validar límite de velocidad
-        is_valid = len(path) <= 999
-        
-        return MovementRoute(path, dash_targets, is_valid)
-    
-    @staticmethod
-    def _find_dash_targets_along_route(route: List[Position], battle: Battle, moving_entity: BattleEntity) -> List[BattleEntity]:
-        """Encuentra enemigos adyacentes a la ruta para embestidas"""
+    def calculate_route_with_anchors(start: Position, destination: Position,
+                                     anchors: List[Position], battle: Battle,
+                                     moving_entity: BattleEntity) -> MovementRoute:
+        """
+        Calcula ruta que pasa por todos los puntos de anclaje en orden
+        A → Anchor1 → Anchor2 → ... → Destination
+        """
+        all_points = [start] + anchors + [destination]
+        full_path = []
+
+        # Calcular ruta por segmentos
+        for i in range(len(all_points) - 1):
+            segment_start = all_points[i]
+            segment_end = all_points[i + 1]
+
+            # ✅ ACTUALIZADO CRÍTICO: Usar is_preview=True para previsualización
+            segment = PathfindingService.find_path(
+                segment_start, segment_end,
+                battle.get_obstacles(),
+                battle.get_entities(),
+                moving_entity,
+                is_preview=True  # ✅ MODO PREVISUALIZACIÓN - ignora enemigos
+            )
+
+            if not segment:
+                return MovementRoute([], [], False)
+
+            # Añadir segmento a la ruta completa
+            if full_path:
+                full_path.extend(segment[1:])
+            else:
+                full_path.extend(segment)
+
+        # Encontrar entidades en las posiciones de anclaje
         dash_targets = []
-        visited_enemies = set()
-        
-        for position in route:
-            # Buscar enemigos adyacentes a esta posición de la ruta
-            adjacent_positions = [
-                Position(position.x + 1, position.y),
-                Position(position.x - 1, position.y), 
-                Position(position.x, position.y + 1),
-                Position(position.x, position.y - 1)
-            ]
-            
-            for adj_pos in adjacent_positions:
-                enemy = battle.get_entity_at_position(adj_pos)
-                if (enemy and 
-                    enemy.team != moving_entity.team and 
-                    enemy.stats.is_alive() and
-                    enemy.id not in visited_enemies):
-                    dash_targets.append(enemy)
-                    visited_enemies.add(enemy.id)
-                    
-        return dash_targets
+        for anchor_pos in anchors:
+            enemy = battle.get_entity_at_position(anchor_pos)
+            if enemy and enemy.team != moving_entity.team:
+                dash_targets.append(enemy)
+
+        return MovementRoute(full_path, dash_targets, True)

@@ -11,18 +11,14 @@ class PathfindingService:
                 obstacles: Set[Position], 
                 entities: List[BattleEntity],
                 moving_entity: BattleEntity,
-                max_distance: int = 999) -> List[Position]:
+                is_preview: bool = False) -> List[Position]:  # ✅ NUEVO parámetro
         """
-        Encuentra la ruta óptima usando A* considerando:
-        - Obstáculos de cobertura
-        - Otras entidades como bloqueos  
-        - Límite de distancia máxima
+        Encuentra la ruta óptima - ahora soporta modo previsualización
         """
-        
-        # Si el destino está bloqueado, no hay ruta
-        if not PathfindingService._is_position_available(end, obstacles, entities, moving_entity):
+        # ✅ ACTUALIZADO: Usar is_preview en la validación
+        if not PathfindingService._is_position_available(end, obstacles, entities, moving_entity, is_preview):
             return []
-            
+        
         # Estructuras para A*
         open_set = []
         came_from: Dict[Position, Optional[Position]] = {}
@@ -37,12 +33,13 @@ class PathfindingService:
             # Si llegamos al destino, reconstruir ruta
             if current == end:
                 return PathfindingService._reconstruct_path(came_from, current)
-                
+            
             # Si excedemos la distancia máxima, abandonar
-            if g_score[current] >= max_distance:
+            if g_score[current] >= 999:  # MAX_MOVEMENT_RANGE
                 continue
-                
-            for neighbor in PathfindingService._get_neighbors(current, obstacles, entities, moving_entity):
+            
+            # ✅ ACTUALIZADO: Pasar is_preview a _get_neighbors
+            for neighbor in PathfindingService._get_neighbors(current, obstacles, entities, moving_entity, is_preview):
                 tentative_g = g_score[current] + 1
                 
                 if neighbor not in g_score or tentative_g < g_score[neighbor]:
@@ -62,40 +59,54 @@ class PathfindingService:
     def _get_neighbors(pos: Position, 
                       obstacles: Set[Position],
                       entities: List[BattleEntity],
-                      moving_entity: BattleEntity) -> List[Position]:
+                      moving_entity: BattleEntity,
+                      is_preview: bool = False) -> List[Position]:  # ✅ NUEVO parámetro
         """Obtiene posiciones vecinas válidas"""
         neighbors = []
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]  # Solo horizontales/verticales
         
         for dx, dy in directions:
             new_pos = Position(pos.x + dx, pos.y + dy)
-            
-            if PathfindingService._is_position_available(new_pos, obstacles, entities, moving_entity):
+            # ✅ ACTUALIZADO: Pasar is_preview
+            if PathfindingService._is_position_available(new_pos, obstacles, entities, moving_entity, is_preview):
                 neighbors.append(new_pos)
-                
+        
         return neighbors
 
     @staticmethod
     def _is_position_available(pos: Position, 
-                            obstacles: Set[Position],
-                            entities: List[BattleEntity],
-                            moving_entity: BattleEntity) -> bool:
-        """Verifica si una posición está disponible para moverse"""
-        # Verificar límites del grid (8x8)
-        if not (0 <= pos.x < 8 and 0 <= pos.y < 8):
+                              obstacles: Set[Position],
+                              entities: List[BattleEntity],
+                              moving_entity: BattleEntity,
+                              is_preview: bool = False) -> bool:  # ✅ NUEVO: modo previsualización
+        """Verifica si una posición está disponible para previsualización o movimiento real"""
+        # Verificar límites del grid
+        from core.domain.config.game_config import GAME_CONFIG
+        grid_width, grid_height = GAME_CONFIG.GRID_SIZE
+        if not (0 <= pos.x < grid_width and 0 <= pos.y < grid_height):
             return False
-            
-        # Verificar obstáculos
+        
+        # Verificar obstáculos (siempre bloquear)
         if pos in obstacles:
             return False
-            
-        # Verificar otras entidades (excepto la que se mueve)
+        
+        # ✅ MODIFICADO CRÍTICO: En modo previsualización, ignorar entidades
+        if is_preview:
+            # Solo bloquear si es un aliado (para no pisar a tus compañeros en la previsualización)
+            for entity in entities:
+                if entity.id == moving_entity.id:
+                    continue
+                if entity.position == pos and entity.team == moving_entity.team:  # Solo aliados bloquean
+                    return False
+            return True  # ✅ PERMITIR posición aunque tenga enemigos
+        
+        # Para movimiento real: bloquear todas las entidades
         for entity in entities:
             if entity.id == moving_entity.id:
                 continue
             if entity.position == pos and entity.stats.is_alive():
                 return False
-                
+        
         return True
 
     @staticmethod
@@ -107,4 +118,4 @@ class PathfindingService:
             current = came_from[current]
             path.append(current)
         path.reverse()
-        return path[1:]  
+        return path[1:]
